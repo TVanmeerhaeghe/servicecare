@@ -1,0 +1,5 @@
+spring:
+  application:
+    name: servicecare
+server:
+  port: 8080

@@ -1,0 +1,36 @@
+# === Java / Maven ===
+**/target/
+*.class
+*.jar
+*.war
+*.ear
+
+# Maven release files
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+
+# === IDEs ===
+*.iml
+.idea/
+.vscode/
+
+# === OS ===
+.DS_Store
+Thumbs.db
+
+# === Logs ===
+*.log
+
+# === Env & secrets ===
+*.env
+**/.env
+
+# === Others ===
+# Backup / temp
+*.swp
+*.swo
+*.bak
+*.tmp
