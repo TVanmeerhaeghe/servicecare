@@ -1,5 +1,8 @@
 spring:
   application:
     name: servicecare
+  profiles:
+    active: dev
 server:
   port: 8080
+
