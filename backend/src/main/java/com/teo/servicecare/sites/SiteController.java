@@ -75,4 +75,32 @@ public class SiteController {
 
     return SiteResponse.from(repo.save(s));
   }
+
+  @PutMapping("/{id}")
+  @PreAuthorize("hasAnyRole('ADMIN','AGENT')")
+  public SiteResponse update(@PathVariable Long id, @RequestBody SiteUpdateRequest in) {
+    Site s = repo.findById(id).orElseThrow();
+
+    if (in.getName() != null) s.setName(in.getName());
+    if (in.getUrl() != null) s.setUrl(in.getUrl());
+    if (in.getEnvironment() != null) s.setEnvironment(in.getEnvironment());
+    if (in.getType() != null) s.setType(in.getType());
+    if (in.getCms() != null) s.setCms(in.getCms());
+    if (in.getStatus() != null) s.setStatus(in.getStatus());
+    if (in.getHostingProvider() != null) s.setHostingProvider(in.getHostingProvider());
+
+    if (in.getClientId() != null) {
+      Client newClient = clientRepo.findById(in.getClientId()).orElseThrow();
+      s.setClient(newClient);
+    }
+
+    return SiteResponse.from(repo.save(s));
+  }
+
+  @DeleteMapping("/{id}")
+  @PreAuthorize("hasAnyRole('ADMIN','AGENT')")
+  public void delete(@PathVariable Long id) {
+    if (!repo.existsById(id)) throw new IllegalArgumentException("site_not_found");
+    repo.deleteById(id);
+  }
 }

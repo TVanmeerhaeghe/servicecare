@@ -30,7 +30,7 @@ public class User {
   private String phone;
 
   @Enumerated(EnumType.STRING) @Column(nullable=false)
-  private Role role = Role.AGENT;
+  private Role role = Role.CLIENT;
 
   @Enumerated(EnumType.STRING) @Column(nullable=false)
   private Status status = Status.ACTIVE;
