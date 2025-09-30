@@ -1,6 +1,6 @@
 package com.teo.servicecare.users;
 
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -9,9 +9,12 @@ import java.util.List;
 @RequestMapping("/api/users")
 public class UserController {
   private final UserRepository repo;
-  private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+  private final PasswordEncoder encoder;
 
-  public UserController(UserRepository repo) { this.repo = repo; }
+  public UserController(UserRepository repo, PasswordEncoder encoder) {
+    this.repo = repo;
+    this.encoder = encoder;
+  }
 
   @GetMapping
   public List<User> all() { return repo.findAll(); }
