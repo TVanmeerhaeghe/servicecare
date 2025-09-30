@@ -1,6 +1,9 @@
 package com.teo.servicecare.config;
 
 import com.teo.servicecare.auth.JwtAuthFilter;
+import com.teo.servicecare.common.JsonAccessDeniedHandler;
+import com.teo.servicecare.common.JsonAuthenticationEntryPoint;
+
 import org.springframework.context.annotation.*;
 import org.springframework.security.authentication.*;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -31,7 +34,11 @@ public class SecurityConfig {
         .requestMatchers("/api/ping", "/api/auth/**").permitAll()
         .anyRequest().authenticated()
       )
-      .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+      .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
+      .exceptionHandling(ex -> ex
+        .authenticationEntryPoint(new JsonAuthenticationEntryPoint())
+        .accessDeniedHandler(new JsonAccessDeniedHandler())
+    );
 
     return http.build();
   }
