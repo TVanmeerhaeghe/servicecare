@@ -8,8 +8,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
@@ -23,10 +21,13 @@ public class UserController {
     this.encoder = encoder;
   }
 
-  @GetMapping
+  @GetMapping("/users")
   @PreAuthorize("hasRole('ADMIN')")
-  public List<User> all() {
-    return repo.findAll();
+  public org.springframework.data.domain.Page<User> all(
+      @org.springframework.data.web.PageableDefault(size = 20, sort = "id",
+          direction = org.springframework.data.domain.Sort.Direction.DESC) 
+      org.springframework.data.domain.Pageable pageable) {
+    return repo.findAll(pageable);
   }
 
   @GetMapping("/{id}")

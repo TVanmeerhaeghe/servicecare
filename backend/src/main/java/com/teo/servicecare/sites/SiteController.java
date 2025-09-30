@@ -16,8 +16,6 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 @RestController
 @RequestMapping("/api/sites")
 public class SiteController {
@@ -32,9 +30,12 @@ public class SiteController {
   }
 
   @GetMapping
-  @PreAuthorize("hasRole('ADMIN')")
-  public List<SiteResponse> all() {
-    return repo.findAll().stream().map(SiteResponse::from).toList();
+  @PreAuthorize("isAuthenticated()")
+  public org.springframework.data.domain.Page<Site> all(
+      @org.springframework.data.web.PageableDefault(size = 20, sort = "id",
+          direction = org.springframework.data.domain.Sort.Direction.DESC)
+      org.springframework.data.domain.Pageable pageable) {
+    return repo.findAll(pageable);
   }
 
   @GetMapping("/{id}")

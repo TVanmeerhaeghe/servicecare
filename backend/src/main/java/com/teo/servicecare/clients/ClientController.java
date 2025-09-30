@@ -10,8 +10,6 @@ import com.teo.servicecare.clients.Client.ClientStatus;
 import com.teo.servicecare.users.User;
 import com.teo.servicecare.users.UserRepository;
 
-import java.util.List;
-
 @RestController
 @RequestMapping("/api/clients")
 public class ClientController {
@@ -25,8 +23,11 @@ public class ClientController {
 
   @GetMapping
   @PreAuthorize("hasRole('ADMIN')")
-  public List<Client> all() {
-    return repo.findAll();
+  public org.springframework.data.domain.Page<Client> all(
+      @org.springframework.data.web.PageableDefault(size = 20, sort = "id",
+          direction = org.springframework.data.domain.Sort.Direction.DESC)
+      org.springframework.data.domain.Pageable pageable) {
+    return repo.findAll(pageable);
   }
 
   @GetMapping("/{id}")
