@@ -1,13 +1,21 @@
 package com.teo.servicecare.sites;
 
+import com.teo.servicecare.users.User;
+import com.teo.servicecare.users.UserRepository;
 import com.teo.servicecare.clients.Client;
 import com.teo.servicecare.clients.ClientRepository;
+
 import com.teo.servicecare.sites.Site.SiteCms;
 import com.teo.servicecare.sites.Site.SiteEnvironment;
 import com.teo.servicecare.sites.Site.SiteStatus;
 import com.teo.servicecare.sites.Site.SiteType;
+
 import jakarta.validation.Valid;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
 
 @RestController
@@ -15,21 +23,46 @@ import java.util.List;
 public class SiteController {
   private final SiteRepository repo;
   private final ClientRepository clientRepo;
+  private final UserRepository userRepo;
 
-  public SiteController(SiteRepository repo, ClientRepository clientRepo) {
+  public SiteController(SiteRepository repo, ClientRepository clientRepo, UserRepository userRepo) {
     this.repo = repo;
     this.clientRepo = clientRepo;
+    this.userRepo = userRepo;
   }
 
   @GetMapping
-  public List<Site> all() { return repo.findAll(); }
+  @PreAuthorize("hasRole('ADMIN')")
+  public List<SiteResponse> all() {
+    return repo.findAll().stream().map(SiteResponse::from).toList();
+  }
 
   @GetMapping("/{id}")
-  public Site one(@PathVariable Long id) { return repo.findById(id).orElseThrow(); }
+  @PreAuthorize("isAuthenticated()")
+  public SiteResponse one(@PathVariable Long id, @AuthenticationPrincipal UserDetails principal) {
+    Site site = repo.findById(id).orElseThrow();
+
+    User current = userRepo.findByEmail(principal.getUsername()).orElseThrow();
+
+    if (current.getRole() == User.Role.ADMIN || current.getRole() == User.Role.AGENT) {
+      return SiteResponse.from(site);
+    }
+
+    Long userClientId = current.getClient() != null ? current.getClient().getId() : null;
+    Long siteClientId = site.getClient() != null ? site.getClient().getId() : null;
+
+    if (current.getRole() == User.Role.CLIENT && userClientId != null && userClientId.equals(siteClientId)) {
+      return SiteResponse.from(site);
+    }
+
+    throw new org.springframework.security.access.AccessDeniedException("forbidden");
+  }
 
   @PostMapping
-  public Site create(@RequestBody @Valid SiteCreateRequest in) {
+  @PreAuthorize("hasAnyRole('ADMIN','AGENT')")
+  public SiteResponse create(@RequestBody @Valid SiteCreateRequest in) {
     Client client = clientRepo.findById(in.getClientId()).orElseThrow();
+
     var s = new Site();
     s.setName(in.getName());
     s.setUrl(in.getUrl());
@@ -39,6 +72,7 @@ public class SiteController {
     s.setStatus(in.getStatus() != null ? in.getStatus() : SiteStatus.ACTIVE);
     s.setHostingProvider(in.getHostingProvider());
     s.setClient(client);
-    return repo.save(s);
+
+    return SiteResponse.from(repo.save(s));
   }
 }

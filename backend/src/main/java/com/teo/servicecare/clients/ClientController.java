@@ -1,6 +1,7 @@
 package com.teo.servicecare.clients;
 
 import jakarta.validation.Valid;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import com.teo.servicecare.clients.Client.ClientStatus;
 import java.util.List;
@@ -13,12 +14,15 @@ public class ClientController {
   public ClientController(ClientRepository repo) { this.repo = repo; }
 
   @GetMapping
+  @PreAuthorize("hasRole('ADMIN')")
   public List<Client> all() { return repo.findAll(); }
 
   @GetMapping("/{id}")
+  @PreAuthorize("hasRole('ADMIN') or @clientSecurity.isOwner(#id, authentication)")
   public Client one(@PathVariable Long id) { return repo.findById(id).orElseThrow(); }
 
   @PostMapping
+  @PreAuthorize("hasRole('ADMIN')")
   public Client create(@RequestBody @Valid ClientCreateRequest in) {
     if (repo.existsByName(in.getName())) throw new IllegalArgumentException("client_name_already_used");
 

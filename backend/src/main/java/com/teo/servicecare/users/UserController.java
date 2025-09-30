@@ -1,5 +1,7 @@
 package com.teo.servicecare.users;
 
+import org.springframework.security.access.prepost.PostAuthorize;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
@@ -17,12 +19,19 @@ public class UserController {
   }
 
   @GetMapping
-  public List<User> all() { return repo.findAll(); }
+  @PreAuthorize("hasRole('ADMIN')")
+  public List<User> all() {
+    return repo.findAll();
+  }
 
   @GetMapping("/{id}")
-  public User one(@PathVariable Long id) { return repo.findById(id).orElseThrow(); }
+  @PostAuthorize("hasRole('ADMIN') or returnObject.email == authentication.name")
+  public User one(@PathVariable Long id) {
+    return repo.findById(id).orElseThrow();
+  }
 
   @PostMapping
+  @PreAuthorize("hasRole('ADMIN')")
   public User create(@RequestBody @Valid UserCreateRequest in) {
     if (repo.existsByEmail(in.getEmail())) throw new IllegalArgumentException("email_already_used");
     var u = new User();

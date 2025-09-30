@@ -5,6 +5,8 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import java.time.Instant;
 
+import com.teo.servicecare.clients.Client;
+
 @Entity
 @Table(name = "users")
 public class User {
@@ -52,6 +54,11 @@ public class User {
   public enum Role { ADMIN, AGENT, CLIENT }
   public enum Status { ACTIVE, DISABLED, INVITED }
 
+  @ManyToOne
+  @JoinColumn(name = "client_id")
+  @JsonIgnore
+  private Client client;
+
   public Long getId() { return id; }
   public void setId(Long id) { this.id = id; }
   public String getEmail() { return email; }
@@ -82,4 +89,6 @@ public class User {
   public void setCreatedBy(Long createdBy) { this.createdBy = createdBy; }
   public Long getUpdatedBy() { return updatedBy; }
   public void setUpdatedBy(Long updatedBy) { this.updatedBy = updatedBy; }
+  public Client getClient() { return client; }
+  public void setClient(Client client) { this.client = client; }
 }
