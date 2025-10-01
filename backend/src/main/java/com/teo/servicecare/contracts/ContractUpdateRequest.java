@@ -6,21 +6,25 @@ import java.time.LocalTime;
 import java.util.Set;
 
 public class ContractUpdateRequest {
+  private Long clientId;
+
   private String name;
   private String description;
 
-  private Long clientId;       
-  private Set<Long> siteIds;   
-
   private LocalDate startDate;
   private LocalDate endDate;
+
   private Boolean autoRenew;
   private Integer noticeDays;
 
   private String timezone;
-  private String supportDays;
+
+  private Contract.SupportDays supportDays;
   private LocalTime supportHoursStart;
   private LocalTime supportHoursEnd;
+
+  private Contract.MeasureWindow measureWindow;
+  private Boolean pauseOnWaiting;
 
   private Integer respCritHours;
   private Integer respHighHours;
@@ -39,14 +43,14 @@ public class ContractUpdateRequest {
 
   private Contract.Status status;
 
+  private Set<Long> siteIds;
+
+  public Long getClientId() { return clientId; }
+  public void setClientId(Long clientId) { this.clientId = clientId; }
   public String getName() { return name; }
   public void setName(String name) { this.name = name; }
   public String getDescription() { return description; }
   public void setDescription(String description) { this.description = description; }
-  public Long getClientId() { return clientId; }
-  public void setClientId(Long clientId) { this.clientId = clientId; }
-  public Set<Long> getSiteIds() { return siteIds; }
-  public void setSiteIds(Set<Long> siteIds) { this.siteIds = siteIds; }
   public LocalDate getStartDate() { return startDate; }
   public void setStartDate(LocalDate startDate) { this.startDate = startDate; }
   public LocalDate getEndDate() { return endDate; }
@@ -57,12 +61,16 @@ public class ContractUpdateRequest {
   public void setNoticeDays(Integer noticeDays) { this.noticeDays = noticeDays; }
   public String getTimezone() { return timezone; }
   public void setTimezone(String timezone) { this.timezone = timezone; }
-  public String getSupportDays() { return supportDays; }
-  public void setSupportDays(String supportDays) { this.supportDays = supportDays; }
+  public Contract.SupportDays getSupportDays() { return supportDays; }
+  public void setSupportDays(Contract.SupportDays supportDays) { this.supportDays = supportDays; }
   public LocalTime getSupportHoursStart() { return supportHoursStart; }
   public void setSupportHoursStart(LocalTime supportHoursStart) { this.supportHoursStart = supportHoursStart; }
   public LocalTime getSupportHoursEnd() { return supportHoursEnd; }
   public void setSupportHoursEnd(LocalTime supportHoursEnd) { this.supportHoursEnd = supportHoursEnd; }
+  public Contract.MeasureWindow getMeasureWindow() { return measureWindow; }
+  public void setMeasureWindow(Contract.MeasureWindow measureWindow) { this.measureWindow = measureWindow; }
+  public Boolean getPauseOnWaiting() { return pauseOnWaiting; }
+  public void setPauseOnWaiting(Boolean pauseOnWaiting) { this.pauseOnWaiting = pauseOnWaiting; }
   public Integer getRespCritHours() { return respCritHours; }
   public void setRespCritHours(Integer respCritHours) { this.respCritHours = respCritHours; }
   public Integer getRespHighHours() { return respHighHours; }
@@ -89,4 +97,6 @@ public class ContractUpdateRequest {
   public void setEmergencyRate(BigDecimal emergencyRate) { this.emergencyRate = emergencyRate; }
   public Contract.Status getStatus() { return status; }
   public void setStatus(Contract.Status status) { this.status = status; }
+  public Set<Long> getSiteIds() { return siteIds; }
+  public void setSiteIds(Set<Long> siteIds) { this.siteIds = siteIds; }
 }

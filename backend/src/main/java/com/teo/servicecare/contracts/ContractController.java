@@ -12,6 +12,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -44,18 +45,13 @@ public class ContractController {
   @GetMapping("/{id}")
   public Contract one(@PathVariable Long id,
                       @AuthenticationPrincipal org.springframework.security.core.userdetails.User principal) {
-
     Contract c = repo.findById(id).orElseThrow();
 
-    if (principal == null) {
-      throw new AccessDeniedException("unauthorized");
-    }
+    if (principal == null) throw new AccessDeniedException("unauthorized");
 
     User current = userRepo.findByEmail(principal.getUsername()).orElseThrow();
 
-    if (current.getRole() == User.Role.ADMIN) {
-      return c;
-    }
+    if (current.getRole() == User.Role.ADMIN) return c;
 
     if (current.getClient() != null && c.getClient() != null
         && current.getClient().getId().equals(c.getClient().getId())) {
@@ -70,45 +66,45 @@ public class ContractController {
   public Contract create(@RequestBody @Valid ContractCreateRequest in) {
     Client client = clientRepo.findById(in.getClientId()).orElseThrow();
 
-    Set<Site> sites = new HashSet<>();
-    if (in.getSiteIds() != null && !in.getSiteIds().isEmpty()) {
-      for (Long siteId : in.getSiteIds()) {
-        sites.add(siteRepo.findById(siteId).orElseThrow());
-      }
-    }
-
     Contract c = new Contract();
     c.setName(in.getName());
     c.setDescription(in.getDescription());
     c.setClient(client);
-    c.setSites(sites);
-
     c.setStartDate(in.getStartDate());
     c.setEndDate(in.getEndDate());
-    c.setAutoRenew(in.isAutoRenew());
-    c.setNoticeDays(in.getNoticeDays());
 
-    c.setTimezone(in.getTimezone());
-    c.setSupportDays(Contract.SupportDays.valueOf(in.getSupportDays()));
-    c.setSupportHoursStart(in.getSupportHoursStart());
-    c.setSupportHoursEnd(in.getSupportHoursEnd());
+    c.setAutoRenew(Boolean.TRUE.equals(in.getAutoRenew()));
+    c.setNoticeDays(in.getNoticeDays() != null ? in.getNoticeDays() : 30);
 
-    c.setRespCritHours(in.getRespCritHours());
-    c.setRespHighHours(in.getRespHighHours());
-    c.setRespMediumHours(in.getRespMediumHours());
-    c.setRespLowHours(in.getRespLowHours());
+    c.setTimezone(in.getTimezone() != null ? in.getTimezone() : "Europe/Paris");
+    c.setSupportDays(in.getSupportDays() != null ? in.getSupportDays() : Contract.SupportDays.MON_FRI);
+    c.setSupportHoursStart(in.getSupportHoursStart() != null ? in.getSupportHoursStart() : LocalTime.of(9, 0));
+    c.setSupportHoursEnd(in.getSupportHoursEnd() != null ? in.getSupportHoursEnd() : LocalTime.of(18, 0));
 
-    c.setResoCritHours(in.getResoCritHours());
-    c.setResoHighHours(in.getResoHighHours());
-    c.setResoMediumHours(in.getResoMediumHours());
-    c.setResoLowHours(in.getResoLowHours());
+    c.setMeasureWindow(in.getMeasureWindow() != null ? in.getMeasureWindow() : Contract.MeasureWindow.BUSINESS_HOURS);
+    c.setPauseOnWaiting(in.getPauseOnWaiting() == null || in.getPauseOnWaiting());
 
-    c.setIncludedHoursMonth(in.getIncludedHoursMonth());
-    c.setMaxTicketsMonth(in.getMaxTicketsMonth());
+    // SLA
+    c.setRespCritHours(in.getRespCritHours() != null ? in.getRespCritHours() : 1);
+    c.setRespHighHours(in.getRespHighHours() != null ? in.getRespHighHours() : 4);
+    c.setRespMediumHours(in.getRespMediumHours() != null ? in.getRespMediumHours() : 8);
+    c.setRespLowHours(in.getRespLowHours() != null ? in.getRespLowHours() : 24);
+
+    c.setResoCritHours(in.getResoCritHours() != null ? in.getResoCritHours() : 4);
+    c.setResoHighHours(in.getResoHighHours() != null ? in.getResoHighHours() : 16);
+    c.setResoMediumHours(in.getResoMediumHours() != null ? in.getResoMediumHours() : 40);
+    c.setResoLowHours(in.getResoLowHours() != null ? in.getResoLowHours() : 120);
+
+    c.setIncludedHoursMonth(in.getIncludedHoursMonth() != null ? in.getIncludedHoursMonth() : 0);
+    c.setMaxTicketsMonth(in.getMaxTicketsMonth() != null ? in.getMaxTicketsMonth() : 0);
     c.setOvertimeRate(in.getOvertimeRate());
     c.setEmergencyRate(in.getEmergencyRate());
+    c.setStatus(in.getStatus() != null ? in.getStatus() : Contract.Status.ACTIVE);
 
-    c.setStatus(in.getStatus());
+    if (in.getSiteIds() != null && !in.getSiteIds().isEmpty()) {
+      Set<Site> sitesSet = new HashSet<>(siteRepo.findAllById(in.getSiteIds()));
+      c.setSites(sitesSet);
+    }
 
     return repo.save(c);
   }
@@ -127,10 +123,7 @@ public class ContractController {
     }
 
     if (in.getSiteIds() != null) {
-      Set<Site> sites = new HashSet<>();
-      for (Long siteId : in.getSiteIds()) {
-        sites.add(siteRepo.findById(siteId).orElseThrow());
-      }
+      Set<Site> sites = new HashSet<>(siteRepo.findAllById(in.getSiteIds()));
       c.setSites(sites);
     }
 
@@ -140,9 +133,12 @@ public class ContractController {
     if (in.getNoticeDays() != null) c.setNoticeDays(in.getNoticeDays());
 
     if (in.getTimezone() != null) c.setTimezone(in.getTimezone());
-    if (in.getSupportDays() != null) c.setSupportDays(Contract.SupportDays.valueOf(in.getSupportDays()));
+    if (in.getSupportDays() != null) c.setSupportDays(in.getSupportDays());
     if (in.getSupportHoursStart() != null) c.setSupportHoursStart(in.getSupportHoursStart());
     if (in.getSupportHoursEnd() != null) c.setSupportHoursEnd(in.getSupportHoursEnd());
+
+    if (in.getMeasureWindow() != null) c.setMeasureWindow(in.getMeasureWindow());
+    if (in.getPauseOnWaiting() != null) c.setPauseOnWaiting(in.getPauseOnWaiting());
 
     if (in.getRespCritHours() != null) c.setRespCritHours(in.getRespCritHours());
     if (in.getRespHighHours() != null) c.setRespHighHours(in.getRespHighHours());
@@ -167,9 +163,7 @@ public class ContractController {
   @DeleteMapping("/{id}")
   @PreAuthorize("hasRole('ADMIN')")
   public void delete(@PathVariable Long id) {
-    if (!repo.existsById(id)) {
-      throw new IllegalArgumentException("contract_not_found");
-    }
+    if (!repo.existsById(id)) throw new IllegalArgumentException("contract_not_found");
     repo.deleteById(id);
   }
 }
