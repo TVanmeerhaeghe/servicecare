@@ -3,6 +3,8 @@ spring:
     name: servicecare
   profiles:
     active: dev
+  jackson:
+    time-zone: Europe/Paris
 server:
   port: 8080
 springdoc:
