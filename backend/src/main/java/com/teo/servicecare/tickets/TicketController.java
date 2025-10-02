@@ -2,13 +2,19 @@ package com.teo.servicecare.tickets;
 
 import com.teo.servicecare.contracts.Contract;
 import com.teo.servicecare.contracts.ContractRepository;
+import com.teo.servicecare.tickets.intervention.InterventionRepository;
+import com.teo.servicecare.tickets.ticketcomment.ThreadEventResponse;
+import com.teo.servicecare.tickets.ticketcomment.TicketComment;
 import com.teo.servicecare.tickets.ticketcomment.TicketCommentRepository;
 import com.teo.servicecare.tickets.ticketcomment.TicketCommentResponse;
 import com.teo.servicecare.tickets.ticketcomment.TicketThreadResponse;
+import com.teo.servicecare.tickets.intervention.Intervention;
+import com.teo.servicecare.tickets.intervention.InterventionResponse;
 import com.teo.servicecare.users.User;
 import com.teo.servicecare.users.UserRepository;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.web.PageableDefault;
@@ -27,12 +33,14 @@ public class TicketController {
   private final UserRepository userRepo;
   private final ContractRepository contractRepo;
   private final TicketCommentRepository commentRepo;
+  private final InterventionRepository interventionRepo;
 
-  public TicketController(TicketRepository repo, UserRepository userRepo, ContractRepository contractRepo, TicketCommentRepository commentRepo) {
+  public TicketController(TicketRepository repo, UserRepository userRepo, ContractRepository contractRepo, TicketCommentRepository commentRepo, InterventionRepository interventionRepo) {
     this.repo = repo;
     this.userRepo = userRepo;
     this.contractRepo = contractRepo;
     this.commentRepo = commentRepo; 
+    this.interventionRepo = interventionRepo;
   }
 
   private static final ZoneId APP_ZONE = ZoneId.of("Europe/Paris");
@@ -94,6 +102,59 @@ public class TicketController {
         commentRepo.findAll(spec, pageable).map(TicketCommentResponse::from);
 
     return TicketThreadResponse.of(TicketResponse.from(t), commentsPage);
+  }
+
+  @GetMapping("/{id}/thread/timeline")
+  @PreAuthorize("isAuthenticated()")
+  public java.util.List<ThreadEventResponse> timeline(@PathVariable Long id,
+                                                      @AuthenticationPrincipal org.springframework.security.core.userdetails.User principal,
+                                                      @RequestParam(name = "limit", defaultValue = "100") int limit) {
+    var t = repo.findById(id).orElseThrow();
+    if (t.getDeletedAt() != null) throw new IllegalArgumentException("ticket_deleted");
+
+    User current = userRepo.findByEmail(principal.getUsername()).orElseThrow();
+
+    boolean isAdminOrAgent = current.getRole() == User.Role.ADMIN || current.getRole() == User.Role.AGENT;
+    if (!isAdminOrAgent) {
+      Long userClientId = current.getClient() != null ? current.getClient().getId() : null;
+      if (!(current.getRole() == User.Role.CLIENT && userClientId != null && userClientId.equals(t.getClientId()))) {
+        throw new org.springframework.security.access.AccessDeniedException("forbidden");
+      }
+    }
+
+    Specification<TicketComment> commentSpec = (r,q,cb) -> cb.and(
+        cb.equal(r.get("ticketId"), id),
+        cb.isNull(r.get("deletedAt"))
+    );
+    if (current.getRole() == User.Role.CLIENT) {
+      commentSpec = commentSpec.and((r,q,cb) -> cb.isFalse(r.get("internalOnly")));
+    }
+    var commentsPage = commentRepo.findAll(
+        commentSpec,
+        PageRequest.of(0, Math.max(1, limit), Sort.by(Sort.Direction.DESC, "id"))
+    ).map(TicketCommentResponse::from);
+
+    Specification<Intervention> interSpec = (r,q,cb) -> cb.and(
+        cb.equal(r.get("ticketId"), id),
+        cb.isNull(r.get("deletedAt"))
+    );
+    var interventionsPage = interventionRepo.findAll(
+        interSpec,
+        PageRequest.of(0, Math.max(1, limit), Sort.by(Sort.Direction.DESC, "id"))
+    ).map(InterventionResponse::from);
+
+    java.util.List<ThreadEventResponse> events = new java.util.ArrayList<>();
+    for (var c : commentsPage.getContent()) events.add(ThreadEventResponse.fromComment(c));
+    for (var i : interventionsPage.getContent()) events.add(ThreadEventResponse.fromIntervention(i));
+
+    events.sort(java.util.Comparator.comparing(ThreadEventResponse::getAt,
+        java.util.Comparator.nullsLast(java.time.LocalDateTime::compareTo)));
+
+    if (events.size() > limit) {
+      events = events.subList(events.size() - limit, events.size());
+    }
+
+    return events;
   }
 
 
