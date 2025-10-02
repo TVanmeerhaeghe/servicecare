@@ -10,6 +10,10 @@ import com.teo.servicecare.clients.Client.ClientStatus;
 import com.teo.servicecare.users.User;
 import com.teo.servicecare.users.UserRepository;
 
+import org.springframework.data.domain.*;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.web.PageableDefault;
+
 @RestController
 @RequestMapping("/api/clients")
 public class ClientController {
@@ -115,5 +119,36 @@ public class ClientController {
       throw new IllegalArgumentException("client_not_found");
     }
     repo.deleteById(id);
+  }
+
+  @GetMapping("/lookup")
+  @PreAuthorize("isAuthenticated()")
+  public Page<java.util.Map<String,Object>> lookup(
+      @RequestParam(required = false) String q,
+      @AuthenticationPrincipal org.springframework.security.core.userdetails.User principal,
+      @PageableDefault(size = 20, sort = "name", direction = Sort.Direction.ASC) Pageable pageable
+  ) {
+    var current = userRepo.findByEmail(principal.getUsername()).orElseThrow();
+
+    Specification<Client> base = (r,qb,cb) -> cb.isNotNull(r.get("id"));
+
+    if (current.getRole() == com.teo.servicecare.users.User.Role.CLIENT) {
+      Long cid = (current.getClient() != null) ? current.getClient().getId() : -1L;
+      base = base.and((r,qb,cb) -> cb.equal(r.get("id"), cid));
+    }
+
+    if (q != null && !q.isBlank()) {
+      String like = "%" + q.trim().toLowerCase() + "%";
+      base = base.and((r,qb,cb) ->
+          cb.like(cb.lower(r.get("name")), like)
+      );
+    }
+
+    return repo.findAll(base, pageable).map(c ->
+        java.util.Map.of(
+            "id", c.getId(),
+            "name", c.getName()
+        )
+    );
   }
 }

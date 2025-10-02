@@ -11,10 +11,15 @@ import com.teo.servicecare.sites.Site.SiteStatus;
 import com.teo.servicecare.sites.Site.SiteType;
 
 import jakarta.validation.Valid;
+
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+
+import org.springframework.data.domain.*;
 
 @RestController
 @RequestMapping("/api/sites")
@@ -103,5 +108,38 @@ public class SiteController {
   public void delete(@PathVariable Long id) {
     if (!repo.existsById(id)) throw new IllegalArgumentException("site_not_found");
     repo.deleteById(id);
+  }
+
+  @GetMapping("/lookup")
+  @PreAuthorize("isAuthenticated()")
+  public Page<java.util.Map<String,Object>> lookupSites(
+    @RequestParam Long clientId,
+    @RequestParam(required = false) String q,
+    @AuthenticationPrincipal org.springframework.security.core.userdetails.User principal,
+    @PageableDefault(size = 20, sort = "name", direction = Sort.Direction.ASC) Pageable pageable
+  ) {
+  var current = userRepo.findByEmail(principal.getUsername()).orElseThrow();
+
+  if (current.getRole() == com.teo.servicecare.users.User.Role.CLIENT) {
+    Long cid = (current.getClient() != null) ? current.getClient().getId() : -1L;
+    if (!cid.equals(clientId)) {
+      throw new org.springframework.security.access.AccessDeniedException("forbidden");
+    }
+  }
+
+  Specification<Site> spec = (r,qb,cb) -> cb.equal(r.get("client").get("id"), clientId);
+
+  if (q != null && !q.isBlank()) {
+    String like = "%" + q.trim().toLowerCase() + "%";
+    spec = spec.and((r,qb,cb) -> cb.like(cb.lower(r.get("name")), like));
+  }
+
+  return repo.findAll(spec, pageable).map(s ->
+      java.util.Map.of(
+          "id", s.getId(),
+          "name", s.getName(),
+          "url", s.getUrl()
+      )
+  );
   }
 }
