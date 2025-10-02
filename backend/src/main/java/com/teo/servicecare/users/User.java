@@ -51,7 +51,7 @@ public class User {
   @Column(name="updated_by")
   private Long updatedBy;
 
-  public enum Role { ADMIN, AGENT, CLIENT }
+  public enum Role { ADMIN, AGENT, TECHNICIAN ,CLIENT }
   public enum Status { ACTIVE, DISABLED, INVITED }
 
   @ManyToOne

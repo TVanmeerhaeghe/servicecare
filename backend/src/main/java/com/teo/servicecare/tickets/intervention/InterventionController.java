@@ -84,7 +84,7 @@ public class InterventionController {
   }
 
   @PostMapping
-  @PreAuthorize("hasAnyRole('ADMIN','AGENT')")
+  @PreAuthorize("hasAnyRole('ADMIN','AGENT','TECHNICIAN')")
   public InterventionResponse create(@RequestBody @jakarta.validation.Valid InterventionCreateRequest in) {
     var t = ticketRepo.findById(in.getTicketId()).orElseThrow();
     if (t.getDeletedAt() != null) throw new IllegalArgumentException("ticket_deleted");
@@ -104,7 +104,7 @@ public class InterventionController {
   }
 
   @PutMapping("/{id}")
-  @PreAuthorize("hasAnyRole('ADMIN','AGENT')")
+  @PreAuthorize("hasAnyRole('ADMIN','AGENT','TECHNICIAN')")
   public InterventionResponse update(@PathVariable Long id, @RequestBody InterventionUpdateRequest in) {
     var i = repo.findById(id).orElseThrow();
     var t = ticketRepo.findById(i.getTicketId()).orElseThrow();
@@ -126,7 +126,7 @@ public class InterventionController {
   }
 
   @PostMapping("/{id}/transition")
-  @PreAuthorize("hasAnyRole('ADMIN','AGENT')")
+  @PreAuthorize("hasAnyRole('ADMIN','AGENT','TECHNICIAN')")
   public InterventionResponse transition(@PathVariable Long id, @RequestParam String action) {
     var i = repo.findById(id).orElseThrow();
     var t = ticketRepo.findById(i.getTicketId()).orElseThrow();

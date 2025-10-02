@@ -60,7 +60,7 @@ public class SiteController {
   }
 
   @PostMapping
-  @PreAuthorize("hasAnyRole('ADMIN','AGENT')")
+  @PreAuthorize("hasAnyRole('ADMIN','AGENT','TECHNICIAN')")
   public SiteResponse create(@RequestBody @Valid SiteCreateRequest in) {
     Client client = clientRepo.findById(in.getClientId()).orElseThrow();
 
@@ -78,7 +78,7 @@ public class SiteController {
   }
 
   @PutMapping("/{id}")
-  @PreAuthorize("hasAnyRole('ADMIN','AGENT')")
+  @PreAuthorize("hasAnyRole('ADMIN','AGENT','TECHNICIAN')")
   public SiteResponse update(@PathVariable Long id, @RequestBody SiteUpdateRequest in) {
     Site s = repo.findById(id).orElseThrow();
 
@@ -99,7 +99,7 @@ public class SiteController {
   }
 
   @DeleteMapping("/{id}")
-  @PreAuthorize("hasAnyRole('ADMIN','AGENT')")
+  @PreAuthorize("hasAnyRole('ADMIN','AGENT','TECHNICIAN')")
   public void delete(@PathVariable Long id) {
     if (!repo.existsById(id)) throw new IllegalArgumentException("site_not_found");
     repo.deleteById(id);

@@ -270,7 +270,7 @@ public class TicketController {
   }
 
   @PostMapping("/{id}/transition")
-  @PreAuthorize("hasAnyRole('ADMIN','AGENT')")
+  @PreAuthorize("hasAnyRole('ADMIN','AGENT','TECHNICIAN')")
   public TicketResponse transition(@PathVariable Long id,
                                    @RequestParam String action) {
     var t = repo.findById(id).orElseThrow();
