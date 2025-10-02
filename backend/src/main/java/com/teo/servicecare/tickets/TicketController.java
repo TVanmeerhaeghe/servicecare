@@ -2,6 +2,9 @@ package com.teo.servicecare.tickets;
 
 import com.teo.servicecare.contracts.Contract;
 import com.teo.servicecare.contracts.ContractRepository;
+import com.teo.servicecare.tickets.ticketcomment.TicketCommentRepository;
+import com.teo.servicecare.tickets.ticketcomment.TicketCommentResponse;
+import com.teo.servicecare.tickets.ticketcomment.TicketThreadResponse;
 import com.teo.servicecare.users.User;
 import com.teo.servicecare.users.UserRepository;
 import jakarta.validation.Valid;
@@ -23,11 +26,13 @@ public class TicketController {
   private final TicketRepository repo;
   private final UserRepository userRepo;
   private final ContractRepository contractRepo;
+  private final TicketCommentRepository commentRepo;
 
-  public TicketController(TicketRepository repo, UserRepository userRepo, ContractRepository contractRepo) {
+  public TicketController(TicketRepository repo, UserRepository userRepo, ContractRepository contractRepo, TicketCommentRepository commentRepo) {
     this.repo = repo;
     this.userRepo = userRepo;
     this.contractRepo = contractRepo;
+    this.commentRepo = commentRepo; 
   }
 
   private static final ZoneId APP_ZONE = ZoneId.of("Europe/Paris");
@@ -58,6 +63,39 @@ public class TicketController {
     }
     throw new org.springframework.security.access.AccessDeniedException("forbidden");
   }
+
+  @GetMapping("/{id}/thread")
+  @PreAuthorize("isAuthenticated()")
+  public TicketThreadResponse thread(@PathVariable Long id,
+                                     @AuthenticationPrincipal UserDetails principal,
+                                     @PageableDefault(size = 50, sort = "id", direction = Sort.Direction.ASC)
+                                     Pageable pageable) {
+    var t = repo.findById(id).orElseThrow();
+    if (t.getDeletedAt() != null) throw new IllegalArgumentException("ticket_deleted");
+
+    User current = userRepo.findByEmail(principal.getUsername()).orElseThrow();
+
+    if (current.getRole() == User.Role.ADMIN || current.getRole() == User.Role.AGENT) {
+    } else {
+      Long userClientId = current.getClient() != null ? current.getClient().getId() : null;
+      if (!(current.getRole() == User.Role.CLIENT && userClientId != null && userClientId.equals(t.getClientId()))) {
+        throw new org.springframework.security.access.AccessDeniedException("forbidden");
+      }
+    }
+
+    Specification<com.teo.servicecare.tickets.ticketcomment.TicketComment> spec =
+        (r,q,cb) -> cb.and(cb.equal(r.get("ticketId"), id), cb.isNull(r.get("deletedAt")));
+
+    if (current.getRole() == User.Role.CLIENT) {
+      spec = spec.and((r,q,cb) -> cb.isFalse(r.get("internalOnly")));
+    }
+
+    Page<TicketCommentResponse> commentsPage =
+        commentRepo.findAll(spec, pageable).map(TicketCommentResponse::from);
+
+    return TicketThreadResponse.of(TicketResponse.from(t), commentsPage);
+  }
+
 
   @GetMapping
   @PreAuthorize("isAuthenticated()")
