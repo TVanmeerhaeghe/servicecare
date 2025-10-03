@@ -6,9 +6,10 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
+import com.teo.servicecare.config.AppProperties;
 import com.teo.servicecare.config.JwtProperties;
 
-@EnableConfigurationProperties(JwtProperties.class)
+@EnableConfigurationProperties({JwtProperties.class, AppProperties.class})
 @SpringBootApplication
 @EnableScheduling
 public class ServiceCareApplication {
