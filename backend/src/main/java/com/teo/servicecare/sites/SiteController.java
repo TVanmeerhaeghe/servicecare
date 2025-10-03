@@ -1,151 +1,78 @@
 package com.teo.servicecare.sites;
 
-import com.teo.servicecare.users.User;
-import com.teo.servicecare.users.UserRepository;
-import com.teo.servicecare.clients.Client;
-import com.teo.servicecare.clients.ClientRepository;
-
-import com.teo.servicecare.sites.Site.SiteCms;
-import com.teo.servicecare.sites.Site.SiteEnvironment;
-import com.teo.servicecare.sites.Site.SiteStatus;
-import com.teo.servicecare.sites.Site.SiteType;
-
+import com.teo.servicecare.common.dto.PageResponse;
+import com.teo.servicecare.sites.dto.SiteCreateRequest;
+import com.teo.servicecare.sites.dto.SiteResponse;
+import com.teo.servicecare.sites.dto.SiteUpdateRequest;
 import jakarta.validation.Valid;
-
-import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
-import org.springframework.data.domain.*;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/sites")
 public class SiteController {
-  private final SiteRepository repo;
-  private final ClientRepository clientRepo;
-  private final UserRepository userRepo;
 
-  public SiteController(SiteRepository repo, ClientRepository clientRepo, UserRepository userRepo) {
-    this.repo = repo;
-    this.clientRepo = clientRepo;
-    this.userRepo = userRepo;
+  private final SiteService service;
+
+  public SiteController(SiteService service) {
+    this.service = service;
   }
 
   @GetMapping
   @PreAuthorize("isAuthenticated()")
-  public org.springframework.data.domain.Page<Site> all(
-      @org.springframework.data.web.PageableDefault(size = 20, sort = "id",
-          direction = org.springframework.data.domain.Sort.Direction.DESC)
-      org.springframework.data.domain.Pageable pageable) {
-    return repo.findAll(pageable);
+  public PageResponse<SiteResponse> all(
+      @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.DESC) Pageable pageable
+  ) {
+    var page = service.list(pageable).map(SiteResponse::from);
+    return PageResponse.from(page);
   }
 
   @GetMapping("/{id}")
   @PreAuthorize("isAuthenticated()")
   public SiteResponse one(@PathVariable Long id, @AuthenticationPrincipal UserDetails principal) {
-    Site site = repo.findById(id).orElseThrow();
-
-    User current = userRepo.findByEmail(principal.getUsername()).orElseThrow();
-
-    if (current.getRole() == User.Role.ADMIN || current.getRole() == User.Role.AGENT) {
-      return SiteResponse.from(site);
-    }
-
-    Long userClientId = current.getClient() != null ? current.getClient().getId() : null;
-    Long siteClientId = site.getClient() != null ? site.getClient().getId() : null;
-
-    if (current.getRole() == User.Role.CLIENT && userClientId != null && userClientId.equals(siteClientId)) {
-      return SiteResponse.from(site);
-    }
-
-    throw new org.springframework.security.access.AccessDeniedException("forbidden");
+    return service.getVisibleTo(principal.getUsername(), id);
   }
 
   @PostMapping
   @PreAuthorize("hasAnyRole('ADMIN','AGENT','TECHNICIAN')")
   public SiteResponse create(@RequestBody @Valid SiteCreateRequest in) {
-    Client client = clientRepo.findById(in.getClientId()).orElseThrow();
-
-    var s = new Site();
-    s.setName(in.getName());
-    s.setUrl(in.getUrl());
-    s.setEnvironment(in.getEnvironment() != null ? in.getEnvironment() : SiteEnvironment.PROD);
-    s.setType(in.getType() != null ? in.getType() : SiteType.WEBSITE);
-    s.setCms(in.getCms() != null ? in.getCms() : SiteCms.CUSTOM);
-    s.setStatus(in.getStatus() != null ? in.getStatus() : SiteStatus.ACTIVE);
-    s.setHostingProvider(in.getHostingProvider());
-    s.setClient(client);
-
-    return SiteResponse.from(repo.save(s));
+    return service.create(in);
   }
 
   @PutMapping("/{id}")
   @PreAuthorize("hasAnyRole('ADMIN','AGENT','TECHNICIAN')")
   public SiteResponse update(@PathVariable Long id, @RequestBody SiteUpdateRequest in) {
-    Site s = repo.findById(id).orElseThrow();
-
-    if (in.getName() != null) s.setName(in.getName());
-    if (in.getUrl() != null) s.setUrl(in.getUrl());
-    if (in.getEnvironment() != null) s.setEnvironment(in.getEnvironment());
-    if (in.getType() != null) s.setType(in.getType());
-    if (in.getCms() != null) s.setCms(in.getCms());
-    if (in.getStatus() != null) s.setStatus(in.getStatus());
-    if (in.getHostingProvider() != null) s.setHostingProvider(in.getHostingProvider());
-
-    if (in.getClientId() != null) {
-      Client newClient = clientRepo.findById(in.getClientId()).orElseThrow();
-      s.setClient(newClient);
-    }
-
-    return SiteResponse.from(repo.save(s));
+    return service.update(id, in);
   }
 
   @DeleteMapping("/{id}")
   @PreAuthorize("hasAnyRole('ADMIN','AGENT','TECHNICIAN')")
   public void delete(@PathVariable Long id) {
-    if (!repo.existsById(id)) throw new IllegalArgumentException("site_not_found");
-    repo.deleteById(id);
+    service.delete(id);
   }
 
   @GetMapping("/lookup")
   @PreAuthorize("isAuthenticated()")
-  public Page<java.util.Map<String,Object>> lookupSites(
-    @RequestParam Long clientId,
-    @RequestParam(required = false) String q,
-    @AuthenticationPrincipal org.springframework.security.core.userdetails.User principal,
-    @PageableDefault(size = 20, sort = "name", direction = Sort.Direction.ASC) Pageable pageable
+  public PageResponse<Map<String,Object>> lookupSites(
+      @RequestParam Long clientId,
+      @RequestParam(required = false) String q,
+      @AuthenticationPrincipal org.springframework.security.core.userdetails.User principal,
+      @PageableDefault(size = 20, sort = "name", direction = Sort.Direction.ASC) Pageable pageable
   ) {
-  var current = userRepo.findByEmail(principal.getUsername()).orElseThrow();
-
-  if (current.getRole() == com.teo.servicecare.users.User.Role.CLIENT) {
-    Long cid = (current.getClient() != null) ? current.getClient().getId() : -1L;
-    if (!cid.equals(clientId)) {
-      throw new org.springframework.security.access.AccessDeniedException("forbidden");
-    }
-  }
-
-  Specification<Site> spec = (r,qb,cb) -> cb.equal(r.get("client").get("id"), clientId);
-
-  if (q != null && !q.isBlank()) {
-    String like = "%" + q.trim().toLowerCase() + "%";
-    spec = spec.and((r,qb,cb) -> cb.like(cb.lower(r.get("name")), like));
-  }
-
-  return repo.findAll(spec, pageable).map(s ->
-      java.util.Map.of(
-          "id", s.getId(),
-          "name", s.getName(),
-          "url", s.getUrl()
-      )
-  );
+    var page = service.lookup(principal.getUsername(), clientId, q, pageable);
+    return PageResponse.from(page);
   }
 
   @GetMapping("/search")
   @PreAuthorize("isAuthenticated()")
-  public org.springframework.data.domain.Page<Site> search(
+  public PageResponse<SiteResponse> search(
       @RequestParam(required = false) Long clientId,
       @RequestParam(required = false) Site.SiteEnvironment environment,
       @RequestParam(required = false) Site.SiteType type,
@@ -155,47 +82,11 @@ public class SiteController {
       @RequestParam(required = false) String createdFrom,
       @RequestParam(required = false) String createdTo,
       @AuthenticationPrincipal org.springframework.security.core.userdetails.User principal,
-      @org.springframework.data.web.PageableDefault(size = 20, sort = "id",
-          direction = org.springframework.data.domain.Sort.Direction.DESC)
-      org.springframework.data.domain.Pageable pageable
+      @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.DESC) Pageable pageable
   ) {
-    var current = userRepo.findByEmail(principal.getUsername()).orElseThrow();
-
-    Specification<Site> spec = (r,qb,cb) -> cb.conjunction();
-
-    if (current.getRole() == com.teo.servicecare.users.User.Role.CLIENT) {
-      Long scopedClientId = (current.getClient() != null) ? current.getClient().getId() : -1L;
-      spec = spec.and((r,qb,cb) -> cb.equal(r.get("client").get("id"), scopedClientId));
-    } else {
-      if (clientId != null) {
-        spec = spec.and((r,qb,cb) -> cb.equal(r.get("client").get("id"), clientId));
-      }
-    }
-
-    if (environment != null) spec = spec.and((r,qb,cb) -> cb.equal(r.get("environment"), environment));
-    if (type != null)        spec = spec.and((r,qb,cb) -> cb.equal(r.get("type"), type));
-    if (cms != null)         spec = spec.and((r,qb,cb) -> cb.equal(r.get("cms"), cms));
-    if (status != null)      spec = spec.and((r,qb,cb) -> cb.equal(r.get("status"), status));
-
-    if (q != null && !q.isBlank()) {
-      String like = "%" + q.trim().toLowerCase() + "%";
-      spec = spec.and((r,qb,cb) -> cb.or(
-          cb.like(cb.lower(r.get("name")), like),
-          cb.like(cb.lower(r.get("url")), like),
-          cb.like(cb.lower(r.get("hostingProvider")), like)
-      ));
-    }
-
-    java.time.ZoneId tz = java.time.ZoneId.of("Europe/Paris");
-    if (createdFrom != null && !createdFrom.isBlank()) {
-      var from = java.time.LocalDate.parse(createdFrom).atStartOfDay(tz).toInstant();
-      spec = spec.and((r,qb,cb) -> cb.greaterThanOrEqualTo(r.get("createdAt"), from));
-    }
-    if (createdTo != null && !createdTo.isBlank()) {
-      var toExcl = java.time.LocalDate.parse(createdTo).plusDays(1).atStartOfDay(tz).toInstant();
-      spec = spec.and((r,qb,cb) -> cb.lessThan(r.get("createdAt"), toExcl));
-    }
-
-    return repo.findAll(spec, pageable);
+    var page = service.search(
+        principal.getUsername(), clientId, environment, type, cms, status, q, createdFrom, createdTo, pageable
+    ).map(SiteResponse::from);
+    return PageResponse.from(page);
   }
 }

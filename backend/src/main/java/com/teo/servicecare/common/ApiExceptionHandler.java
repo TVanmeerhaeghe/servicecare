@@ -9,6 +9,8 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
+import com.teo.servicecare.common.dto.ErrorResponse;
+
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -66,6 +68,14 @@ public class ApiExceptionHandler {
     return wrap("BAD_REQUEST", ex.getMessage(), req, Map.of());
   }
 
+  // 404 - ressource non trouvée
+  @ExceptionHandler(java.util.NoSuchElementException.class)
+  @org.springframework.web.bind.annotation.ResponseStatus(org.springframework.http.HttpStatus.NOT_FOUND)
+  public ErrorResponse notFound(java.util.NoSuchElementException ex,
+                                jakarta.servlet.http.HttpServletRequest req) {
+    return wrap("NOT_FOUND", "Resource not found", req, java.util.Map.of("reason", ex.getMessage()));
+  }
+
   // 405 - mauvaise méthode HTTP
   @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
   @ResponseStatus(HttpStatus.METHOD_NOT_ALLOWED)
@@ -86,4 +96,6 @@ public class ApiExceptionHandler {
   public ErrorResponse serverError(Exception ex, HttpServletRequest req) {
     return wrap("INTERNAL_ERROR", "Unexpected error", req, Map.of("reason", ex.getMessage()));
   }
+
+
 }

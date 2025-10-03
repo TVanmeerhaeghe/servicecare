@@ -1,201 +1,91 @@
 package com.teo.servicecare.clients;
 
+import com.teo.servicecare.clients.Client.ClientStatus;
+import com.teo.servicecare.clients.dto.ClientCreateRequest;
+import com.teo.servicecare.clients.dto.ClientUpdateRequest;
+import com.teo.servicecare.common.dto.PageResponse;
+import com.teo.servicecare.clients.dto.ClientResponse;
+
 import jakarta.validation.Valid;
-import org.springframework.security.access.AccessDeniedException;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import com.teo.servicecare.clients.Client.ClientStatus;
-import com.teo.servicecare.users.User;
-import com.teo.servicecare.users.UserRepository;
-
-import org.springframework.data.domain.*;
-import org.springframework.data.jpa.domain.Specification;
-import org.springframework.data.web.PageableDefault;
-
-import java.time.*;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/clients")
 public class ClientController {
-  private final ClientRepository repo;
-  private final UserRepository userRepo;
 
-  public ClientController(ClientRepository repo, UserRepository userRepo) {
-    this.repo = repo;
-    this.userRepo = userRepo;
+  private final ClientService service;
+
+  public ClientController(ClientService service) {
+    this.service = service;
   }
 
   @GetMapping
   @PreAuthorize("hasRole('ADMIN')")
-  public Page<Client> all(
-      @PageableDefault(size = 20, sort = "id",
-          direction = Sort.Direction.DESC)
-      Pageable pageable) {
-    return repo.findAll(pageable);
+  public PageResponse<ClientResponse> all(
+      @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.DESC)
+      Pageable pageable
+  ) {
+    var page = service.list(pageable).map(ClientResponse::from);
+    return PageResponse.from(page);
   }
 
   @GetMapping("/{id}")
-  public Client one(@PathVariable Long id,
-                    @AuthenticationPrincipal org.springframework.security.core.userdetails.User principal) {
-    Client client = repo.findById(id).orElseThrow();
-
-    if (principal == null) {
-      throw new AccessDeniedException("unauthorized");
-    }
-
-    String email = principal.getUsername();
-    User current = userRepo.findByEmail(email).orElseThrow();
-
-    if (current.getRole() == User.Role.ADMIN) {
-      return client;
-    }
-
-    if (current.getClient() != null && client.getId().equals(current.getClient().getId())) {
-      return client;
-    }
-
-    throw new AccessDeniedException("forbidden");
+  public ClientResponse one(@PathVariable Long id,
+                            @AuthenticationPrincipal org.springframework.security.core.userdetails.User principal) {
+    if (principal == null) throw new org.springframework.security.access.AccessDeniedException("unauthorized");
+    var client = service.getVisibleTo(principal.getUsername(), id);
+    return ClientResponse.from(client);
   }
 
   @PostMapping
   @PreAuthorize("hasRole('ADMIN')")
-  public Client create(@RequestBody @Valid ClientCreateRequest in) {
-    if (repo.existsByName(in.getName())) {
-      throw new IllegalArgumentException("client_name_already_used");
-    }
-
-    var c = new Client();
-    c.setName(in.getName());
-    c.setLegalName(in.getLegalName());
-    c.setSiret(in.getSiret());
-    c.setVatNumber(in.getVatNumber());
-    c.setContactFirstName(in.getContactFirstName());
-    c.setContactLastName(in.getContactLastName());
-    c.setContactEmail(in.getContactEmail());
-    c.setContactPhone(in.getContactPhone());
-    c.setBillingEmail(in.getBillingEmail());
-    c.setTechnicalEmail(in.getTechnicalEmail());
-    c.setWebsiteUrl(in.getWebsiteUrl());
-    c.setAddressLine1(in.getAddressLine1());
-    c.setPostalCode(in.getPostalCode());
-    c.setCity(in.getCity());
-    c.setCountryCode(in.getCountryCode());
-    c.setCurrencyCode(in.getCurrencyCode());
-    c.setStatus(in.getStatus() != null ? in.getStatus() : ClientStatus.ACTIVE);
-
-    return repo.save(c);
+  public ClientResponse create(@RequestBody @Valid ClientCreateRequest in) {
+    var created = service.create(in);
+    return ClientResponse.from(created);
   }
 
   @PutMapping("/{id}")
   @PreAuthorize("hasRole('ADMIN')")
-  public Client update(@PathVariable Long id, @RequestBody ClientUpdateRequest in) {
-    Client c = repo.findById(id).orElseThrow();
-
-    if (in.getName() != null) c.setName(in.getName());
-    if (in.getLegalName() != null) c.setLegalName(in.getLegalName());
-    if (in.getSiret() != null) c.setSiret(in.getSiret());
-    if (in.getVatNumber() != null) c.setVatNumber(in.getVatNumber());
-    if (in.getContactFirstName() != null) c.setContactFirstName(in.getContactFirstName());
-    if (in.getContactLastName() != null) c.setContactLastName(in.getContactLastName());
-    if (in.getContactEmail() != null) c.setContactEmail(in.getContactEmail());
-    if (in.getContactPhone() != null) c.setContactPhone(in.getContactPhone());
-    if (in.getBillingEmail() != null) c.setBillingEmail(in.getBillingEmail());
-    if (in.getTechnicalEmail() != null) c.setTechnicalEmail(in.getTechnicalEmail());
-    if (in.getWebsiteUrl() != null) c.setWebsiteUrl(in.getWebsiteUrl());
-    if (in.getAddressLine1() != null) c.setAddressLine1(in.getAddressLine1());
-    if (in.getPostalCode() != null) c.setPostalCode(in.getPostalCode());
-    if (in.getCity() != null) c.setCity(in.getCity());
-    if (in.getCountryCode() != null) c.setCountryCode(in.getCountryCode());
-    if (in.getCurrencyCode() != null) c.setCurrencyCode(in.getCurrencyCode());
-    if (in.getStatus() != null) c.setStatus(in.getStatus());
-
-    return repo.save(c);
+  public ClientResponse update(@PathVariable Long id, @RequestBody ClientUpdateRequest in) {
+    var updated = service.update(id, in);
+    return ClientResponse.from(updated);
   }
 
   @DeleteMapping("/{id}")
   @PreAuthorize("hasRole('ADMIN')")
   public void delete(@PathVariable Long id) {
-    if (!repo.existsById(id)) {
-      throw new IllegalArgumentException("client_not_found");
-    }
-    repo.deleteById(id);
+    service.delete(id);
   }
 
   @GetMapping("/lookup")
   @PreAuthorize("isAuthenticated()")
-  public Page<java.util.Map<String,Object>> lookup(
+  public PageResponse<Map<String,Object>> lookup(
       @RequestParam(required = false) String q,
       @AuthenticationPrincipal org.springframework.security.core.userdetails.User principal,
       @PageableDefault(size = 20, sort = "name", direction = Sort.Direction.ASC) Pageable pageable
   ) {
-    var current = userRepo.findByEmail(principal.getUsername()).orElseThrow();
-
-    Specification<Client> base = (r,qb,cb) -> cb.isNotNull(r.get("id"));
-
-    if (current.getRole() == com.teo.servicecare.users.User.Role.CLIENT) {
-      Long cid = (current.getClient() != null) ? current.getClient().getId() : -1L;
-      base = base.and((r,qb,cb) -> cb.equal(r.get("id"), cid));
-    }
-
-    if (q != null && !q.isBlank()) {
-      String like = "%" + q.trim().toLowerCase() + "%";
-      base = base.and((r,qb,cb) ->
-          cb.like(cb.lower(r.get("name")), like)
-      );
-    }
-
-    return repo.findAll(base, pageable).map(c ->
-        java.util.Map.of(
-            "id", c.getId(),
-            "name", c.getName()
-        )
-    );
+    var page = service.lookup(principal.getUsername(), q, pageable);
+    return PageResponse.from(page);
   }
 
   @GetMapping("/search")
   @PreAuthorize("hasRole('ADMIN')")
-  public Page<Client> search(
+  public PageResponse<ClientResponse> search(
       @RequestParam(required = false) ClientStatus status,
       @RequestParam(required = false) String q,
-      @RequestParam(required = false) String createdFrom, 
-      @RequestParam(required = false) String createdTo,   
+      @RequestParam(required = false) String createdFrom,
+      @RequestParam(required = false) String createdTo,
       @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.DESC) Pageable pageable
   ) {
-    Specification<Client> spec = (r,qb,cb) -> cb.conjunction();
-
-    if (status != null) {
-      spec = spec.and((r,qb,cb) -> cb.equal(r.get("status"), status));
-    }
-
-    if (q != null && !q.isBlank()) {
-      String like = "%" + q.trim().toLowerCase() + "%";
-      spec = spec.and((r,qb,cb) -> cb.or(
-          cb.like(cb.lower(r.get("name")), like),
-          cb.like(cb.lower(r.get("legalName")), like),
-          cb.like(cb.lower(r.get("contactFirstName")), like),
-          cb.like(cb.lower(r.get("contactLastName")), like),
-          cb.like(cb.lower(r.get("contactEmail")), like),
-          cb.like(cb.lower(r.get("billingEmail")), like),
-          cb.like(cb.lower(r.get("technicalEmail")), like),
-          cb.like(cb.lower(r.get("websiteUrl")), like),
-          cb.like(cb.lower(r.get("vatNumber")), like),
-          cb.like(cb.lower(r.get("siret")), like),
-          cb.like(cb.lower(r.get("city")), like)
-      ));
-    }
-
-    ZoneId tz = ZoneId.of("Europe/Paris");
-    if (createdFrom != null && !createdFrom.isBlank()) {
-      Instant from = LocalDate.parse(createdFrom).atStartOfDay(tz).toInstant();
-      spec = spec.and((r,qb,cb) -> cb.greaterThanOrEqualTo(r.get("createdAt"), from));
-    }
-    if (createdTo != null && !createdTo.isBlank()) {
-      Instant toExcl = LocalDate.parse(createdTo).plusDays(1).atStartOfDay(tz).toInstant();
-      spec = spec.and((r,qb,cb) -> cb.lessThan(r.get("createdAt"), toExcl));
-    }
-
-    return repo.findAll(spec, pageable);
+    var page = service.search(status, q, createdFrom, createdTo, pageable)
+                      .map(ClientResponse::from);
+    return PageResponse.from(page);
   }
 }
