@@ -8,8 +8,9 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 
 import com.teo.servicecare.config.AppProperties;
 import com.teo.servicecare.config.JwtProperties;
+import com.teo.servicecare.config.UploadsProperties;
 
-@EnableConfigurationProperties({JwtProperties.class, AppProperties.class})
+@EnableConfigurationProperties({JwtProperties.class, AppProperties.class, UploadsProperties.class})
 @SpringBootApplication
 @EnableScheduling
 public class ServiceCareApplication {
