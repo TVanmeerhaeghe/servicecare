@@ -1,23 +1,19 @@
-package com.teo.servicecare.tickets.ticketcomment.dto;
+package com.teo.servicecare.tickets.thread.dto;
 
 import com.teo.servicecare.tickets.intervention.Intervention;
-import com.teo.servicecare.tickets.intervention.dto.InterventionResponse;
-import com.teo.servicecare.tickets.attachment.dto.AttachmentResponse;
-
 import java.time.LocalDateTime;
 
 public class ThreadEventResponse {
+
   public enum Kind { COMMENT, INTERVENTION, ATTACHMENT }
 
   private Kind kind;
   private Long id;
   private LocalDateTime at;
 
-  // COMMENT
   private String authorName;
   private String body;
 
-  // INTERVENTION
   private Intervention.Type interventionType;
   private Intervention.Status interventionStatus;
   private String title;
@@ -27,48 +23,55 @@ public class ThreadEventResponse {
   private LocalDateTime actualStart;
   private LocalDateTime actualEnd;
 
-  // ATTACHMENT
   private String originalName;
   private String contentType;
   private Long size;
   private String downloadUrl;
 
-  public static ThreadEventResponse fromComment(TicketCommentResponse c) {
+  public static ThreadEventResponse fromComment(Long id, LocalDateTime at, String authorName, String body) {
     var e = new ThreadEventResponse();
     e.kind = Kind.COMMENT;
-    e.id = c.getId();
-    e.at = c.getCreatedAt();
-    e.authorName = c.getAuthorName();
-    e.body = c.getBody();
+    e.id = id;
+    e.at = at;
+    e.authorName = authorName;
+    e.body = body;
     return e;
   }
 
-  public static ThreadEventResponse fromIntervention(InterventionResponse i) {
+  public static ThreadEventResponse fromIntervention(
+      Long id, LocalDateTime at,
+      Intervention.Type type, Intervention.Status status,
+      String title, Long technicianUserId,
+      LocalDateTime scheduledStart, LocalDateTime scheduledEnd,
+      LocalDateTime actualStart, LocalDateTime actualEnd
+  ) {
     var e = new ThreadEventResponse();
     e.kind = Kind.INTERVENTION;
-    e.id = i.getId();
-    LocalDateTime at = i.getActualStart() != null ? i.getActualStart()
-        : (i.getScheduledStart() != null ? i.getScheduledStart() : i.getCreatedAt());
+    e.id = id;
     e.at = at;
-    e.interventionType = i.getType();
-    e.interventionStatus = i.getStatus();
-    e.title = i.getTitle();
-    e.technicianUserId = i.getTechnicianUserId();
-    e.scheduledStart = i.getScheduledStart();
-    e.scheduledEnd = i.getScheduledEnd();
-    e.actualStart = i.getActualStart();
-    e.actualEnd = i.getActualEnd();
+    e.interventionType = type;
+    e.interventionStatus = status;
+    e.title = title;
+    e.technicianUserId = technicianUserId;
+    e.scheduledStart = scheduledStart;
+    e.scheduledEnd = scheduledEnd;
+    e.actualStart = actualStart;
+    e.actualEnd = actualEnd;
     return e;
   }
 
-  public static ThreadEventResponse fromAttachment(AttachmentResponse a, String downloadUrl) {
+  public static ThreadEventResponse fromAttachment(
+      Long id, LocalDateTime at,
+      String originalName, String contentType, Long size,
+      String downloadUrl
+  ) {
     var e = new ThreadEventResponse();
     e.kind = Kind.ATTACHMENT;
-    e.id = a.getId();
-    e.at = a.getCreatedAt();
-    e.originalName = a.getOriginalName();
-    e.contentType = a.getContentType();
-    e.size = a.getSize();
+    e.id = id;
+    e.at = at;
+    e.originalName = originalName;
+    e.contentType = contentType;
+    e.size = size;
     e.downloadUrl = downloadUrl;
     return e;
   }
