@@ -431,4 +431,89 @@ public class TicketController {
   }
   private LocalDateTime max(LocalDateTime a, LocalDateTime b) { return a.isAfter(b) ? a : b; }
   private LocalDateTime min(LocalDateTime a, LocalDateTime b) { return a.isBefore(b) ? a : b; }
+
+  @GetMapping("/search")
+  @PreAuthorize("isAuthenticated()")
+  public Page<TicketResponse> search(
+
+      @RequestParam(required = false) Long clientId,
+      @RequestParam(required = false) Long siteId,
+      @RequestParam(required = false) Long contractId,
+      @RequestParam(required = false) Long assigneeUserId,
+      @RequestParam(required = false) Ticket.TicketStatus status,
+      @RequestParam(required = false) Ticket.TicketPriority priority,
+      @RequestParam(required = false) Boolean slaBreached,
+      @RequestParam(required = false) String q,
+      @RequestParam(required = false) String createdFrom,
+      @RequestParam(required = false) String createdTo,
+      @RequestParam(required = false) String updatedFrom,
+      @RequestParam(required = false) String updatedTo,
+      @RequestParam(required = false) String respondByBefore,
+      @RequestParam(required = false) String resolveByBefore,
+
+      @AuthenticationPrincipal org.springframework.security.core.userdetails.User principal,
+      @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.DESC) Pageable pageable
+  ) {
+    var current = userRepo.findByEmail(principal.getUsername()).orElseThrow();
+
+    Specification<Ticket> spec = (r,qb,cb) -> cb.isNull(r.get("deletedAt"));
+
+    boolean isClient = current.getRole() == User.Role.CLIENT;
+    if (isClient) {
+      Long scopedClientId = (current.getClient() != null) ? current.getClient().getId() : -1L;
+      spec = spec.and((r,qb,cb) -> cb.equal(r.get("clientId"), scopedClientId));
+    } else {
+      if (clientId != null) spec = spec.and((r,qb,cb) -> cb.equal(r.get("clientId"), clientId));
+    }
+
+    if (siteId != null)        spec = spec.and((r,qb,cb) -> cb.equal(r.get("siteId"), siteId));
+    if (contractId != null)    spec = spec.and((r,qb,cb) -> cb.equal(r.get("contractId"), contractId));
+    if (assigneeUserId != null) spec = spec.and((r,qb,cb) -> cb.equal(r.get("assigneeUserId"), assigneeUserId));
+    if (status != null)        spec = spec.and((r,qb,cb) -> cb.equal(r.get("status"), status));
+    if (priority != null)      spec = spec.and((r,qb,cb) -> cb.equal(r.get("priority"), priority));
+    if (slaBreached != null)   spec = spec.and((r,qb,cb) -> cb.equal(r.get("slaBreached"), slaBreached));
+
+    if (q != null && !q.isBlank()) {
+      String like = "%" + q.trim().toLowerCase() + "%";
+      spec = spec.and((r, qb, cb) -> {
+        var titleLower = cb.lower(r.get("title"));
+        var descAsVarchar = cb.concat("", r.get("description"));
+        var descLower = cb.lower(descAsVarchar);
+        return cb.or(
+            cb.like(titleLower, like),
+            cb.like(descLower, like)
+        );
+      });
+    }
+
+    java.time.ZoneId tz = APP_ZONE;
+
+    if (createdFrom != null && !createdFrom.isBlank()) {
+      var from = java.time.LocalDate.parse(createdFrom).atStartOfDay();
+      spec = spec.and((r,qb,cb) -> cb.greaterThanOrEqualTo(r.get("createdAt"), from));
+    }
+    if (createdTo != null && !createdTo.isBlank()) {
+      var toExcl = java.time.LocalDate.parse(createdTo).plusDays(1).atStartOfDay();
+      spec = spec.and((r,qb,cb) -> cb.lessThan(r.get("createdAt"), toExcl));
+    }
+    if (updatedFrom != null && !updatedFrom.isBlank()) {
+      var from = java.time.LocalDate.parse(updatedFrom).atStartOfDay();
+      spec = spec.and((r,qb,cb) -> cb.greaterThanOrEqualTo(r.get("updatedAt"), from));
+    }
+    if (updatedTo != null && !updatedTo.isBlank()) {
+      var toExcl = java.time.LocalDate.parse(updatedTo).plusDays(1).atStartOfDay();
+      spec = spec.and((r,qb,cb) -> cb.lessThan(r.get("updatedAt"), toExcl));
+    }
+    if (respondByBefore != null && !respondByBefore.isBlank()) {
+      var dt = java.time.LocalDate.parse(respondByBefore).atStartOfDay(tz).toLocalDateTime();
+      spec = spec.and((r,qb,cb) -> cb.lessThanOrEqualTo(r.get("respondBy"), dt));
+    }
+    if (resolveByBefore != null && !resolveByBefore.isBlank()) {
+      var dt = java.time.LocalDate.parse(resolveByBefore).atStartOfDay(tz).toLocalDateTime();
+      spec = spec.and((r,qb,cb) -> cb.lessThanOrEqualTo(r.get("resolveBy"), dt));
+    }
+
+    return repo.findAll(spec, pageable).map(TicketResponse::from);
+  }
+
 }

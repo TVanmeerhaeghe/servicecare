@@ -166,4 +166,72 @@ public class ContractController {
     if (!repo.existsById(id)) throw new IllegalArgumentException("contract_not_found");
     repo.deleteById(id);
   }
+
+  @GetMapping("/search")
+  @PreAuthorize("isAuthenticated()")
+  public org.springframework.data.domain.Page<Contract> search(
+      @RequestParam(required = false) Long clientId,
+      @RequestParam(required = false) Contract.Status status,
+      @RequestParam(required = false) Contract.MeasureWindow measureWindow,
+      @RequestParam(required = false) Contract.SupportDays supportDays,
+      @RequestParam(required = false) String q,
+      @RequestParam(required = false) String startFrom,
+      @RequestParam(required = false) String startTo,
+      @RequestParam(required = false) String endFrom,
+      @RequestParam(required = false) String endTo,
+      @AuthenticationPrincipal org.springframework.security.core.userdetails.User principal,
+      @org.springframework.data.web.PageableDefault(size = 20, sort = "id",
+          direction = org.springframework.data.domain.Sort.Direction.DESC)
+      org.springframework.data.domain.Pageable pageable
+  ) {
+    var current = userRepo.findByEmail(principal.getUsername()).orElseThrow();
+
+    org.springframework.data.jpa.domain.Specification<Contract> spec =
+        (r,qb,cb) -> cb.conjunction();
+
+    if (current.getRole() == com.teo.servicecare.users.User.Role.ADMIN) {
+    } else {
+      Long scopedClientId = (current.getClient() != null) ? current.getClient().getId() : -1L;
+      spec = spec.and((r,qb,cb) -> cb.equal(r.get("client").get("id"), scopedClientId));
+    }
+
+    if (clientId != null) {
+      spec = spec.and((r,qb,cb) -> cb.equal(r.get("client").get("id"), clientId));
+    }
+    if (status != null) {
+      spec = spec.and((r,qb,cb) -> cb.equal(r.get("status"), status));
+    }
+    if (measureWindow != null) {
+      spec = spec.and((r,qb,cb) -> cb.equal(r.get("measureWindow"), measureWindow));
+    }
+    if (supportDays != null) {
+      spec = spec.and((r,qb,cb) -> cb.equal(r.get("supportDays"), supportDays));
+    }
+    if (q != null && !q.isBlank()) {
+      String like = "%" + q.trim().toLowerCase() + "%";
+      spec = spec.and((r,qb,cb) -> cb.or(
+          cb.like(cb.lower(r.get("name")), like),
+          cb.like(cb.lower(r.get("description")), like)
+      ));
+    }
+
+    if (startFrom != null && !startFrom.isBlank()) {
+      var d = java.time.LocalDate.parse(startFrom);
+      spec = spec.and((r,qb,cb) -> cb.greaterThanOrEqualTo(r.get("startDate"), d));
+    }
+    if (startTo != null && !startTo.isBlank()) {
+      var d = java.time.LocalDate.parse(startTo);
+      spec = spec.and((r,qb,cb) -> cb.lessThanOrEqualTo(r.get("startDate"), d));
+    }
+    if (endFrom != null && !endFrom.isBlank()) {
+      var d = java.time.LocalDate.parse(endFrom);
+      spec = spec.and((r,qb,cb) -> cb.greaterThanOrEqualTo(r.get("endDate"), d));
+    }
+    if (endTo != null && !endTo.isBlank()) {
+      var d = java.time.LocalDate.parse(endTo);
+      spec = spec.and((r,qb,cb) -> cb.lessThanOrEqualTo(r.get("endDate"), d));
+    }
+
+    return repo.findAll(spec, pageable);
+  }
 }

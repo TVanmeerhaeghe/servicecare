@@ -14,6 +14,8 @@ import org.springframework.data.domain.*;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.web.PageableDefault;
 
+import java.time.*;
+
 @RestController
 @RequestMapping("/api/clients")
 public class ClientController {
@@ -27,10 +29,10 @@ public class ClientController {
 
   @GetMapping
   @PreAuthorize("hasRole('ADMIN')")
-  public org.springframework.data.domain.Page<Client> all(
-      @org.springframework.data.web.PageableDefault(size = 20, sort = "id",
-          direction = org.springframework.data.domain.Sort.Direction.DESC)
-      org.springframework.data.domain.Pageable pageable) {
+  public Page<Client> all(
+      @PageableDefault(size = 20, sort = "id",
+          direction = Sort.Direction.DESC)
+      Pageable pageable) {
     return repo.findAll(pageable);
   }
 
@@ -150,5 +152,50 @@ public class ClientController {
             "name", c.getName()
         )
     );
+  }
+
+  @GetMapping("/search")
+  @PreAuthorize("hasRole('ADMIN')")
+  public Page<Client> search(
+      @RequestParam(required = false) ClientStatus status,
+      @RequestParam(required = false) String q,
+      @RequestParam(required = false) String createdFrom, 
+      @RequestParam(required = false) String createdTo,   
+      @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.DESC) Pageable pageable
+  ) {
+    Specification<Client> spec = (r,qb,cb) -> cb.conjunction();
+
+    if (status != null) {
+      spec = spec.and((r,qb,cb) -> cb.equal(r.get("status"), status));
+    }
+
+    if (q != null && !q.isBlank()) {
+      String like = "%" + q.trim().toLowerCase() + "%";
+      spec = spec.and((r,qb,cb) -> cb.or(
+          cb.like(cb.lower(r.get("name")), like),
+          cb.like(cb.lower(r.get("legalName")), like),
+          cb.like(cb.lower(r.get("contactFirstName")), like),
+          cb.like(cb.lower(r.get("contactLastName")), like),
+          cb.like(cb.lower(r.get("contactEmail")), like),
+          cb.like(cb.lower(r.get("billingEmail")), like),
+          cb.like(cb.lower(r.get("technicalEmail")), like),
+          cb.like(cb.lower(r.get("websiteUrl")), like),
+          cb.like(cb.lower(r.get("vatNumber")), like),
+          cb.like(cb.lower(r.get("siret")), like),
+          cb.like(cb.lower(r.get("city")), like)
+      ));
+    }
+
+    ZoneId tz = ZoneId.of("Europe/Paris");
+    if (createdFrom != null && !createdFrom.isBlank()) {
+      Instant from = LocalDate.parse(createdFrom).atStartOfDay(tz).toInstant();
+      spec = spec.and((r,qb,cb) -> cb.greaterThanOrEqualTo(r.get("createdAt"), from));
+    }
+    if (createdTo != null && !createdTo.isBlank()) {
+      Instant toExcl = LocalDate.parse(createdTo).plusDays(1).atStartOfDay(tz).toInstant();
+      spec = spec.and((r,qb,cb) -> cb.lessThan(r.get("createdAt"), toExcl));
+    }
+
+    return repo.findAll(spec, pageable);
   }
 }

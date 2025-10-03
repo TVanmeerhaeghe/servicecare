@@ -142,4 +142,60 @@ public class SiteController {
       )
   );
   }
+
+  @GetMapping("/search")
+  @PreAuthorize("isAuthenticated()")
+  public org.springframework.data.domain.Page<Site> search(
+      @RequestParam(required = false) Long clientId,
+      @RequestParam(required = false) Site.SiteEnvironment environment,
+      @RequestParam(required = false) Site.SiteType type,
+      @RequestParam(required = false) Site.SiteCms cms,
+      @RequestParam(required = false) Site.SiteStatus status,
+      @RequestParam(required = false) String q,
+      @RequestParam(required = false) String createdFrom,
+      @RequestParam(required = false) String createdTo,
+      @AuthenticationPrincipal org.springframework.security.core.userdetails.User principal,
+      @org.springframework.data.web.PageableDefault(size = 20, sort = "id",
+          direction = org.springframework.data.domain.Sort.Direction.DESC)
+      org.springframework.data.domain.Pageable pageable
+  ) {
+    var current = userRepo.findByEmail(principal.getUsername()).orElseThrow();
+
+    Specification<Site> spec = (r,qb,cb) -> cb.conjunction();
+
+    if (current.getRole() == com.teo.servicecare.users.User.Role.CLIENT) {
+      Long scopedClientId = (current.getClient() != null) ? current.getClient().getId() : -1L;
+      spec = spec.and((r,qb,cb) -> cb.equal(r.get("client").get("id"), scopedClientId));
+    } else {
+      if (clientId != null) {
+        spec = spec.and((r,qb,cb) -> cb.equal(r.get("client").get("id"), clientId));
+      }
+    }
+
+    if (environment != null) spec = spec.and((r,qb,cb) -> cb.equal(r.get("environment"), environment));
+    if (type != null)        spec = spec.and((r,qb,cb) -> cb.equal(r.get("type"), type));
+    if (cms != null)         spec = spec.and((r,qb,cb) -> cb.equal(r.get("cms"), cms));
+    if (status != null)      spec = spec.and((r,qb,cb) -> cb.equal(r.get("status"), status));
+
+    if (q != null && !q.isBlank()) {
+      String like = "%" + q.trim().toLowerCase() + "%";
+      spec = spec.and((r,qb,cb) -> cb.or(
+          cb.like(cb.lower(r.get("name")), like),
+          cb.like(cb.lower(r.get("url")), like),
+          cb.like(cb.lower(r.get("hostingProvider")), like)
+      ));
+    }
+
+    java.time.ZoneId tz = java.time.ZoneId.of("Europe/Paris");
+    if (createdFrom != null && !createdFrom.isBlank()) {
+      var from = java.time.LocalDate.parse(createdFrom).atStartOfDay(tz).toInstant();
+      spec = spec.and((r,qb,cb) -> cb.greaterThanOrEqualTo(r.get("createdAt"), from));
+    }
+    if (createdTo != null && !createdTo.isBlank()) {
+      var toExcl = java.time.LocalDate.parse(createdTo).plusDays(1).atStartOfDay(tz).toInstant();
+      spec = spec.and((r,qb,cb) -> cb.lessThan(r.get("createdAt"), toExcl));
+    }
+
+    return repo.findAll(spec, pageable);
+  }
 }

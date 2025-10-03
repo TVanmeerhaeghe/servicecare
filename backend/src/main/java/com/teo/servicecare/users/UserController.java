@@ -2,6 +2,9 @@ package com.teo.servicecare.users;
 
 import com.teo.servicecare.clients.ClientRepository;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.*;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -21,12 +24,12 @@ public class UserController {
     this.encoder = encoder;
   }
 
-  @GetMapping("/users")
+  @GetMapping
   @PreAuthorize("hasRole('ADMIN')")
-  public org.springframework.data.domain.Page<User> all(
-      @org.springframework.data.web.PageableDefault(size = 20, sort = "id",
-          direction = org.springframework.data.domain.Sort.Direction.DESC) 
-      org.springframework.data.domain.Pageable pageable) {
+  public Page<User> all(
+      @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.DESC)
+      Pageable pageable
+  ) {
     return repo.findAll(pageable);
   }
 
@@ -114,5 +117,38 @@ public class UserController {
     }
     u.setPassword(encoder.encode(in.getNewPassword()));
     repo.save(u);
+  }
+
+  @GetMapping("/search")
+  @PreAuthorize("hasRole('ADMIN')")
+  public Page<User> search(
+      @RequestParam(required = false) String q,
+      @RequestParam(required = false) User.Role role,
+      @RequestParam(required = false) User.Status status,
+      @RequestParam(required = false) Long clientId,
+      @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.DESC) Pageable pageable
+  ) {
+    Specification<User> spec = (r,qb,cb) -> cb.isNotNull(r.get("id"));
+
+    if (q != null && !q.isBlank()) {
+      String like = "%" + q.trim().toLowerCase() + "%";
+      spec = spec.and((r,qb,cb) -> cb.or(
+          cb.like(cb.lower(r.get("email")), like),
+          cb.like(cb.lower(r.get("firstName")), like),
+          cb.like(cb.lower(r.get("lastName")), like),
+          cb.like(cb.lower(r.get("phone")), like)
+      ));
+    }
+
+    if (role != null)   spec = spec.and((r,qb,cb) -> cb.equal(r.get("role"), role));
+    if (status != null) spec = spec.and((r,qb,cb) -> cb.equal(r.get("status"), status));
+    if (clientId != null) {
+      spec = spec.and((r,qb,cb) -> cb.and(
+          cb.isNotNull(r.get("client")),
+          cb.equal(r.get("client").get("id"), clientId)
+      ));
+    }
+
+    return repo.findAll(spec, pageable);
   }
 }
