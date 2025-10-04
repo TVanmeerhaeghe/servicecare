@@ -1,28 +1,12 @@
-<template>
-    <div class="dashboard-view">
-        <h1>Dashboard</h1>
-    </div>
-</template>
-
-<script>
-export default {
-    name: 'DashboardView',
-    data() {
-        return {
-
-        };
-    },
-    methods: {
-
-    },
-    mounted() {
-
-    }
-};
+<script setup lang="ts">
+import { useAuthStore } from '@/stores/auth'
+const auth = useAuthStore()
 </script>
 
-<style scoped>
-.dashboard-view {
-    padding: 20px;
-}
-</style>
+<template>
+  <div class="card">
+    <h2>Dashboard</h2>
+    <p>Bienvenue.</p>
+    <p>Point de départ</p>
+  </div>
+</template>

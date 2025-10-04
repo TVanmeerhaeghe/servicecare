@@ -1,27 +1,34 @@
 import axios from 'axios'
-import { useAuthStore } from '@/stores/auth'
 
 export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE,
+  baseURL: import.meta.env.VITE_API_BASE || '',
   withCredentials: false,
 })
 
-api.interceptors.request.use((config) => {
-  const auth = useAuthStore()
-  if (auth.token) {
-    config.headers = config.headers ?? {}
-    config.headers.Authorization = `Bearer ${auth.token}`
+export function setAuthToken(token: string | null) {
+  if (token) {
+    api.defaults.headers.common['Authorization'] = `Bearer ${token}`
+  } else {
+    delete api.defaults.headers.common['Authorization']
   }
-  return config
-})
+}
+
+let onUnauthorized: (() => void) | null = null
+export function setOnUnauthorizedHandler(fn: (() => void) | null) {
+  onUnauthorized = fn
+}
 
 api.interceptors.response.use(
   (res) => res,
   (error) => {
-    const auth = useAuthStore()
-    if (error?.response?.status === 401) {
-      auth.logout()
+    const status = error?.response?.status
+    if (status === 401) {
+      if (onUnauthorized) {
+        try { onUnauthorized() } catch (e) { }
+      }
     }
     return Promise.reject(error)
   }
 )
+
+export default api
