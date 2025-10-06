@@ -2,7 +2,7 @@
   <div class="page-stack">
     <header class="page-header">
       <div>
-        <p class="text-sm text-muted">Gestion des comptes et contacts</p>
+        <p class="text-sm text-muted">Gestion des clients et contacts.</p>
       </div>
       <button class="btn btn-primary" @click="goCreate">
         Ajouter un client

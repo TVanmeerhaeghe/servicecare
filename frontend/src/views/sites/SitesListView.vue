@@ -67,10 +67,10 @@
         </thead>
         <tbody>
           <tr v-if="loading">
-            <td colspan="5" class="text-center text-muted py-6">Chargement…</td>
+            <td colspan="6" class="text-center text-muted py-6">Chargement…</td>
           </tr>
           <tr v-else-if="!sites.length">
-            <td colspan="5" class="text-center text-muted py-6">Aucun site trouvé.</td>
+            <td colspan="6" class="text-center text-muted py-6">Aucun site trouvé.</td>
           </tr>
           <tr v-for="site in sites" :key="site.id">
             <td>
@@ -112,6 +112,26 @@
         </tbody>
       </table>
     </section>
+
+    <footer class="pagination">
+      <div>Page {{ pagination.page }} / {{ totalPages }}</div>
+      <div class="pagination-controls">
+        <button
+          class="btn btn-ghost"
+          :disabled="pagination.page === 1"
+          @click="changePage(pagination.page - 1)"
+        >
+          Précédent
+        </button>
+        <button
+          class="btn btn-ghost"
+          :disabled="pagination.page === totalPages"
+          @click="changePage(pagination.page + 1)"
+        >
+          Suivant
+        </button>
+      </div>
+    </footer>
   </div>
 
   <ConfirmDialog
@@ -125,7 +145,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { fetchSites, deleteSite } from '@/api/sites'
 import type { Site } from '@/types/sites'
@@ -148,6 +168,10 @@ const pagination = reactive({
   size: 20,
   total: 0,
 })
+
+const totalPages = computed(() =>
+  Math.max(1, Math.ceil(pagination.total / pagination.size))
+)
 
 const badgeClass = (status: string | null) => ({
   'badge--status-active': status === 'ACTIVE',
@@ -210,6 +234,12 @@ async function handleDelete() {
 
 function reload() {
   pagination.page = 1
+  load()
+}
+
+function changePage(next: number) {
+  if (next < 1 || next > totalPages.value) return
+  pagination.page = next
   load()
 }
 
