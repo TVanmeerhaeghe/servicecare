@@ -77,19 +77,37 @@
           </dl>
         </div>
       </article>
+
+      <article v-if="client" class="data-card">
+        <div class="p-5">
+          <h2 class="section-kicker">Client associé</h2>
+          <dl class="info-grid">
+            <div><dt>Nom</dt><dd>{{ client.name || '—' }}</dd></div>
+            <div><dt>Statut</dt><dd>{{ client.status || '—' }}</dd></div>
+            <div><dt>Email</dt><dd>{{ client.contactEmail || '—' }}</dd></div>
+            <div><dt>Téléphone</dt><dd>{{ client.contactPhone || '—' }}</dd></div>
+          </dl>
+          <button class="btn btn-primary text-sm mt-4" @click="goToClientDetails">
+            Voir le client
+          </button>
+        </div>
+      </article>
     </section>
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, computed } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { fetchSiteDetails } from '@/api/sites'
+import { fetchClientDetails } from '@/api/clients'
 import type { Site } from '@/types/sites'
+import type { Client } from '@/types/clients'
 
 const route = useRoute()
 const router = useRouter()
 const site = ref<Site | null>(null)
+const client = ref<Client | null>(null)
 
 const badgeClass = (status: string | null) => ({
   'badge--status-active': status === 'ACTIVE',
@@ -104,6 +122,14 @@ const sslBadge = (status: string | null) => ({
 async function load() {
   const { data } = await fetchSiteDetails(route.params.id as string)
   site.value = data
+  if (data.clientId) {
+    await loadClientInfo(data.clientId)
+  }
+}
+
+async function loadClientInfo(clientId: number) {
+  const { data } = await fetchClientDetails(clientId)
+  client.value = data
 }
 
 function goBack() {
@@ -112,6 +138,11 @@ function goBack() {
 
 function goEdit() {
   router.push({ name: 'site-edit', params: { id: route.params.id } })
+}
+
+function goToClientDetails() {
+  if (!client.value?.id) return
+  router.push({ name: 'client-details', params: { id: client.value.id } })
 }
 
 onMounted(load)

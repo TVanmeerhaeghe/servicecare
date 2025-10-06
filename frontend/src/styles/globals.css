@@ -734,6 +734,69 @@ dd {
   color: var(--color-info);
 }
 
+.badge--ticket-status-open,
+.badge--ticket-status-assigned,
+.badge--ticket-status-in-progress,
+.badge--ticket-status-waiting,
+.badge--ticket-status-closed,
+.badge--ticket-status-canceled,
+.badge--ticket-priority-critical,
+.badge--ticket-priority-high,
+.badge--ticket-priority-medium,
+.badge--ticket-priority-low {
+  border-width: 2px;
+  border-style: solid;
+  border-radius: var(--radius-full);
+  padding: 6px 14px;
+  background: transparent;
+}
+
+.badge--ticket-status-open {
+  border-color: var(--color-info);
+  color: var(--color-info);
+}
+
+.badge--ticket-status-assigned,
+.badge--ticket-status-in-progress {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.badge--ticket-status-waiting {
+  border-color: var(--color-warning);
+  color: var(--color-warning);
+}
+
+.badge--ticket-status-closed {
+  border-color: var(--color-success);
+  color: var(--color-success);
+}
+
+.badge--ticket-status-canceled {
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+}
+
+.badge--ticket-priority-critical {
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+}
+
+.badge--ticket-priority-high {
+  border-color: var(--color-warning);
+  color: var(--color-warning);
+}
+
+.badge--ticket-priority-medium {
+  border-color: var(--color-info);
+  color: var(--color-info);
+}
+
+.badge--ticket-priority-low {
+  border-color: var(--color-text-muted);
+  color: var(--color-text-muted);
+}
+
 .btn-group {
   display: inline-flex;
   gap: 8px;

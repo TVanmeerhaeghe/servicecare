@@ -9,6 +9,10 @@ import SitesLayout from "@/views/sites/SitesLayout.vue";
 import SitesListView from "@/views/sites/SitesListView.vue";
 import SiteFormView from "@/views/sites/SiteFormView.vue";
 import SiteDetailsView from "@/views/sites/SiteDetailsView.vue";
+import TicketsLayout from "@/views/tickets/TicketsLayout.vue";
+import TicketsListView from "@/views/tickets/TicketsListView.vue";
+import TicketDetailsView from "@/views/tickets/TicketDetailsView.vue";
+import TicketFormView from "@/views/tickets/TicketFormView.vue";
 import { useAuthStore } from "@/stores/auth";
 
 const routes: RouteRecordRaw[] = [
@@ -91,6 +95,39 @@ const routes: RouteRecordRaw[] = [
         component: SiteFormView,
         props: true,
         meta: { title: "Modifier site" },
+      },
+    ],
+  },
+  {
+    path: "/tickets",
+    component: TicketsLayout,
+    meta: { requiresAuth: true },
+    children: [
+      {
+        path: "",
+        name: "tickets-list",
+        component: TicketsListView,
+        meta: { title: "Tickets" },
+      },
+      {
+        path: "create",
+        name: "ticket-create",
+        component: TicketFormView,
+        meta: { title: "Nouveau ticket" },
+      },
+      {
+        path: ":id",
+        name: "ticket-details",
+        component: TicketDetailsView,
+        props: true,
+        meta: { title: "Détails ticket" },
+      },
+      {
+        path: ":id/edit",
+        name: "ticket-edit",
+        component: TicketFormView,
+        props: true,
+        meta: { title: "Modifier ticket" },
       },
     ],
   },

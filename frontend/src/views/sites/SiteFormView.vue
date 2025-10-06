@@ -10,7 +10,7 @@
     </header>
 
     <section class="data-card">
-      <form class="grid gap-6 p-6" @submit.prevent>
+      <form class="grid gap-6 p-6" @submit.prevent="submit">
         <div class="form-section">
           <h2 class="form-section-title">Général</h2>
           <div class="form-grid">
@@ -23,8 +23,17 @@
               <input v-model="form.url" type="url" class="input" required />
             </label>
             <label class="field">
-              <span>Client ID *</span>
-              <input v-model.number="form.clientId" type="number" min="1" class="input" required />
+              <span>Client *</span>
+              <select v-model="selectedClientId" class="input" required>
+                <option value="" disabled>Sélectionner un client</option>
+                <option
+                  v-for="clientOption in clientOptions"
+                  :key="clientOption.id"
+                  :value="clientOption.id"
+                >
+                  {{ clientOption.name || `Client #${clientOption.id}` }}
+                </option>
+              </select>
             </label>
           </div>
         </div>
@@ -144,10 +153,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { createSite, updateSite, fetchSiteDetails } from '@/api/sites'
-import type { SitePayload, Site } from '@/types/sites'
+import { fetchClients } from '@/api/clients'
+import type { SitePayload } from '@/types/sites'
+import type { Client } from '@/types/clients'
 
 const route = useRoute()
 const router = useRouter()
@@ -190,6 +201,15 @@ const maintenanceEnabledString = computed({
   },
 })
 
+const clientOptions = ref<Client[]>([])
+
+const selectedClientId = computed({
+  get: () => form.clientId ?? '',
+  set: (value: string | number) => {
+    form.clientId = value === '' ? null : Number(value)
+  },
+})
+
 async function preload() {
   if (!isEdit.value) return
   const { data } = await fetchSiteDetails(route.params.id as string)
@@ -210,5 +230,12 @@ function goBack() {
   router.push({ name: 'sites-list' })
 }
 
-onMounted(preload)
+async function loadClientOptions() {
+  const { data } = await fetchClients({ page: 0, size: 100 })
+  clientOptions.value = data.content
+}
+
+onMounted(async () => {
+  await Promise.all([loadClientOptions(), preload()])
+})
 </script>

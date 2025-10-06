@@ -63,9 +63,9 @@ const route = useRoute()
 const router = useRouter()
 
 const nav = [
+  { to: '/tickets', label: 'Tickets', icon: 'TK' },
   { to: '/clients', label: 'Clients', icon: 'CL' },
   { to: '/sites', label: 'Sites', icon: 'ST' },
-  { to: '/contracts', label: 'Contrats', icon: 'CT' },
 ]
 
 const pageTitle = computed(() => {
