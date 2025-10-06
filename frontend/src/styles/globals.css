@@ -58,6 +58,11 @@ body{
 /* small helpers */
 .backdrop-glow { backdrop-filter: blur(8px); }
 
+a {
+  text-decoration: none;
+  color: var(--color-text);
+}
+
 /* ===========================
    COMPONENTS (copié depuis ton layer)
    =========================== */
@@ -106,7 +111,12 @@ body{
 .btn-ghost {
   background: transparent;
   color: var(--color-text-muted);
-  border: 1px solid rgba(47,60,75,0.12);
+  border: 3px solid rgba(47,60,75,0.12);
+}
+.btn-ghost:hover {
+  background: color-mix(in srgb, var(--color-bg-soft) 40%, transparent);
+  color: var(--color-text);
+  border-color: rgba(47,60,75,0.24);
 }
 
 .btn:not(.app-header .btn){
@@ -145,6 +155,8 @@ form label {
   width: var(--sidebar-width);
   padding-top: 1rem;
   padding-bottom: 1.25rem;
+  padding-right: 1rem;
+  padding-left: 0.2rem;
   gap: 0.5rem;
 }
 .sidebar .sidebar-header { padding: .75rem 1rem; display:flex; gap:.75rem; align-items:center; }

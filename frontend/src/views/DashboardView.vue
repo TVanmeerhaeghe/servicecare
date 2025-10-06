@@ -41,14 +41,43 @@
 
 <script setup lang="ts">
 import { reactive, onMounted } from 'vue'
+import api from '@/api/http'
 
-const overview = reactive({
-  openCount: 24,
-  breachedOpenCount: 3,
-  avgResponseHours: 1.2,
-  avgResolveHours: 3.8,
-  todayNewTickets: 5,
-  myAssignedOpen: 7
+interface DashboardOverview {
+  openCount: number
+  breachedOpenCount: number
+  avgResponseHours: number
+  avgResolveHours: number
+  todayNewTickets: number
+  myAssignedOpen: number
+}
+
+const overview = reactive<DashboardOverview>({
+  openCount: 0,
+  breachedOpenCount: 0,
+  avgResponseHours: 0,
+  avgResolveHours: 0,
+  todayNewTickets: 0,
+  myAssignedOpen: 0
 })
 
+async function loadOverview() {
+  try {
+    const res = await api.get<DashboardOverview>('/dashboard/overview')
+    const data = res.data
+
+    overview.openCount = data.openCount
+    overview.breachedOpenCount = data.breachedOpenCount
+    overview.avgResponseHours = data.avgResponseHours
+    overview.avgResolveHours = data.avgResolveHours
+    overview.todayNewTickets = data.todayNewTickets
+    overview.myAssignedOpen = data.myAssignedOpen
+  } catch (err: any) {
+    console.error('Erreur lors du chargement du dashboard', err)
+  }
+}
+
+onMounted(() => {
+  loadOverview()
+})
 </script>

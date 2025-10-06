@@ -6,7 +6,7 @@
           SC
         </div>
         <div :class="collapsed ? 'hidden' : ''">
-          <div class="font-semibold tracking-wide">ServiceCare</div>
+          <div class="font-semibold tracking-wide"><a href="/dashboard">ServiceCare</a></div>
         </div>
       </div>
 
@@ -59,7 +59,6 @@ const router = useRouter()
 const collapsed = ref(false)
 
 const nav = [
-  { to: '/dashboard', label: 'Dashboard', icon: 'DB' },
   { to: '/clients', label: 'Clients', icon: 'CL' },
   { to: '/contracts', label: 'Contrats', icon: 'CT' }
 ]

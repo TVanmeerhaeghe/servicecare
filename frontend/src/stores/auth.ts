@@ -49,11 +49,11 @@ export const useAuthStore = defineStore('auth', {
     },
 
     async login(payload: LoginRequest) {
-      const { data } = await api.post<{ token: string }>('/api/auth/login', payload)
+      const { data } = await api.post<{ token: string }>('/auth/login', payload)
       this.token = data.token
       setAuthToken(this.token)
 
-      const userData = await api.get<AuthUser>('/api/users/self')
+      const userData = await api.get<AuthUser>('/users/self')
       this.user = userData.data
 
       this.persist()
@@ -67,7 +67,7 @@ export const useAuthStore = defineStore('auth', {
     },
 
     async fetchMe() {
-      const { data } = await api.get<AuthUser>('/api/users/self')
+      const { data } = await api.get<AuthUser>('/users/self')
       this.user = data
       this.persist()
     },
