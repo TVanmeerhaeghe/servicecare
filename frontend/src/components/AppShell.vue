@@ -64,6 +64,7 @@ const router = useRouter()
 
 const nav = [
   { to: '/clients', label: 'Clients', icon: 'CL' },
+  { to: '/sites', label: 'Sites', icon: 'ST' },
   { to: '/contracts', label: 'Contrats', icon: 'CT' },
 ]
 

@@ -5,6 +5,10 @@ import ClientsLayout from "@/views/clients/ClientsLayout.vue";
 import ClientsListView from "@/views/clients/ClientsListView.vue";
 import ClientFormView from "@/views/clients/ClientFormView.vue";
 import ClientDetailsView from "@/views/clients/ClientDetailsView.vue";
+import SitesLayout from "@/views/sites/SitesLayout.vue";
+import SitesListView from "@/views/sites/SitesListView.vue";
+import SiteFormView from "@/views/sites/SiteFormView.vue";
+import SiteDetailsView from "@/views/sites/SiteDetailsView.vue";
 import { useAuthStore } from "@/stores/auth";
 
 const routes: RouteRecordRaw[] = [
@@ -54,6 +58,39 @@ const routes: RouteRecordRaw[] = [
         component: ClientFormView,
         props: true,
         meta: { title: "Modifier client" },
+      },
+    ],
+  },
+  {
+    path: "/sites",
+    component: SitesLayout,
+    meta: { requiresAuth: true },
+    children: [
+      {
+        path: "",
+        name: "sites-list",
+        component: SitesListView,
+        meta: { title: "Sites" },
+      },
+      {
+        path: "create",
+        name: "site-create",
+        component: SiteFormView,
+        meta: { title: "Nouveau site" },
+      },
+      {
+        path: ":id",
+        name: "site-details",
+        component: SiteDetailsView,
+        props: true,
+        meta: { title: "Détails site" },
+      },
+      {
+        path: ":id/edit",
+        name: "site-edit",
+        component: SiteFormView,
+        props: true,
+        meta: { title: "Modifier site" },
       },
     ],
   },

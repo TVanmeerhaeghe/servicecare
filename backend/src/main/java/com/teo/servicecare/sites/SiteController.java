@@ -28,8 +28,7 @@ public class SiteController {
   @GetMapping
   @PreAuthorize("isAuthenticated()")
   public PageResponse<SiteResponse> all(
-      @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.DESC) Pageable pageable
-  ) {
+      @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
     var page = service.list(pageable).map(SiteResponse::from);
     return PageResponse.from(page);
   }
@@ -60,12 +59,11 @@ public class SiteController {
 
   @GetMapping("/lookup")
   @PreAuthorize("isAuthenticated()")
-  public PageResponse<Map<String,Object>> lookupSites(
+  public PageResponse<Map<String, Object>> lookupSites(
       @RequestParam Long clientId,
       @RequestParam(required = false) String q,
       @AuthenticationPrincipal org.springframework.security.core.userdetails.User principal,
-      @PageableDefault(size = 20, sort = "name", direction = Sort.Direction.ASC) Pageable pageable
-  ) {
+      @PageableDefault(size = 20, sort = "name", direction = Sort.Direction.ASC) Pageable pageable) {
     var page = service.lookup(principal.getUsername(), clientId, q, pageable);
     return PageResponse.from(page);
   }
@@ -82,11 +80,10 @@ public class SiteController {
       @RequestParam(required = false) String createdFrom,
       @RequestParam(required = false) String createdTo,
       @AuthenticationPrincipal org.springframework.security.core.userdetails.User principal,
-      @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.DESC) Pageable pageable
-  ) {
+      @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
     var page = service.search(
-        principal.getUsername(), clientId, environment, type, cms, status, q, createdFrom, createdTo, pageable
-    ).map(SiteResponse::from);
+        principal.getUsername(), clientId, environment, type, cms, status, q, createdFrom, createdTo, pageable)
+        .map(SiteResponse::from);
     return PageResponse.from(page);
   }
 }

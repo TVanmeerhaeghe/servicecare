@@ -60,6 +60,25 @@ public class SiteService {
     s.setCms(in.getCms() != null ? in.getCms() : Site.SiteCms.CUSTOM);
     s.setStatus(in.getStatus() != null ? in.getStatus() : Site.SiteStatus.ACTIVE);
     s.setHostingProvider(in.getHostingProvider());
+    s.setHostingPlan(in.getHostingPlan());
+    s.setRepoUrl(in.getRepoUrl());
+    s.setProdUrl(in.getProdUrl());
+    s.setStagingUrl(in.getStagingUrl());
+    s.setServerIp(in.getServerIp());
+    s.setPhpVersion(in.getPhpVersion());
+    s.setNodeVersion(in.getNodeVersion());
+    s.setMysqlVersion(in.getMysqlVersion());
+    s.setSslStatus(in.getSslStatus() != null ? in.getSslStatus() : Site.SiteSslStatus.UNKNOWN);
+    s.setAnalyticsId(in.getAnalyticsId());
+    s.setGtId(in.getGtId());
+    s.setSentryDsn(in.getSentryDsn());
+    s.setMaintenanceEnabled(in.getMaintenanceEnabled() != null ? in.getMaintenanceEnabled() : Boolean.TRUE);
+    s.setMaintenanceEmail(in.getMaintenanceEmail());
+    s.setLastMaintenanceAt(in.getLastMaintenanceAt());
+    s.setNextMaintenanceAt(in.getNextMaintenanceAt());
+    s.setLastBackupAt(in.getLastBackupAt());
+    s.setNotes(in.getNotes());
+
     s.setClient(client);
 
     return SiteResponse.from(repo.save(s));
@@ -68,13 +87,56 @@ public class SiteService {
   public SiteResponse update(Long id, SiteUpdateRequest in) {
     var s = repo.findById(id).orElseThrow();
 
-    if (in.getName() != null) s.setName(in.getName());
-    if (in.getUrl() != null) s.setUrl(in.getUrl());
-    if (in.getEnvironment() != null) s.setEnvironment(in.getEnvironment());
-    if (in.getType() != null) s.setType(in.getType());
-    if (in.getCms() != null) s.setCms(in.getCms());
-    if (in.getStatus() != null) s.setStatus(in.getStatus());
-    if (in.getHostingProvider() != null) s.setHostingProvider(in.getHostingProvider());
+    if (in.getName() != null)
+      s.setName(in.getName());
+    if (in.getUrl() != null)
+      s.setUrl(in.getUrl());
+    if (in.getEnvironment() != null)
+      s.setEnvironment(in.getEnvironment());
+    if (in.getType() != null)
+      s.setType(in.getType());
+    if (in.getCms() != null)
+      s.setCms(in.getCms());
+    if (in.getStatus() != null)
+      s.setStatus(in.getStatus());
+    if (in.getHostingProvider() != null)
+      s.setHostingProvider(in.getHostingProvider());
+    if (in.getHostingPlan() != null)
+      s.setHostingPlan(in.getHostingPlan());
+    if (in.getRepoUrl() != null)
+      s.setRepoUrl(in.getRepoUrl());
+    if (in.getProdUrl() != null)
+      s.setProdUrl(in.getProdUrl());
+    if (in.getStagingUrl() != null)
+      s.setStagingUrl(in.getStagingUrl());
+    if (in.getServerIp() != null)
+      s.setServerIp(in.getServerIp());
+    if (in.getPhpVersion() != null)
+      s.setPhpVersion(in.getPhpVersion());
+    if (in.getNodeVersion() != null)
+      s.setNodeVersion(in.getNodeVersion());
+    if (in.getMysqlVersion() != null)
+      s.setMysqlVersion(in.getMysqlVersion());
+    if (in.getSslStatus() != null)
+      s.setSslStatus(in.getSslStatus());
+    if (in.getAnalyticsId() != null)
+      s.setAnalyticsId(in.getAnalyticsId());
+    if (in.getGtId() != null)
+      s.setGtId(in.getGtId());
+    if (in.getSentryDsn() != null)
+      s.setSentryDsn(in.getSentryDsn());
+    if (in.getMaintenanceEnabled() != null)
+      s.setMaintenanceEnabled(in.getMaintenanceEnabled());
+    if (in.getMaintenanceEmail() != null)
+      s.setMaintenanceEmail(in.getMaintenanceEmail());
+    if (in.getLastMaintenanceAt() != null)
+      s.setLastMaintenanceAt(in.getLastMaintenanceAt());
+    if (in.getNextMaintenanceAt() != null)
+      s.setNextMaintenanceAt(in.getNextMaintenanceAt());
+    if (in.getLastBackupAt() != null)
+      s.setLastBackupAt(in.getLastBackupAt());
+    if (in.getNotes() != null)
+      s.setNotes(in.getNotes());
 
     if (in.getClientId() != null) {
       Client newClient = clientRepo.findById(in.getClientId()).orElseThrow();
@@ -85,11 +147,12 @@ public class SiteService {
   }
 
   public void delete(Long id) {
-    if (!repo.existsById(id)) throw new IllegalArgumentException("site_not_found");
+    if (!repo.existsById(id))
+      throw new IllegalArgumentException("site_not_found");
     repo.deleteById(id);
   }
 
-  public Page<Map<String,Object>> lookup(String email, Long clientId, String q, Pageable pageable) {
+  public Page<Map<String, Object>> lookup(String email, Long clientId, String q, Pageable pageable) {
     var current = userRepo.findByEmail(email).orElseThrow();
 
     if (current.getRole() == User.Role.CLIENT) {
@@ -99,63 +162,64 @@ public class SiteService {
       }
     }
 
-    Specification<Site> spec = (r,qb,cb) -> cb.equal(r.get("client").get("id"), clientId);
+    Specification<Site> spec = (r, qb, cb) -> cb.equal(r.get("client").get("id"), clientId);
 
     if (q != null && !q.isBlank()) {
       String like = "%" + q.trim().toLowerCase() + "%";
-      spec = spec.and((r,qb,cb) -> cb.like(cb.lower(r.get("name")), like));
+      spec = spec.and((r, qb, cb) -> cb.like(cb.lower(r.get("name")), like));
     }
 
-    return repo.findAll(spec, pageable).map(s ->
-        Map.of("id", s.getId(), "name", s.getName(), "url", s.getUrl())
-    );
+    return repo.findAll(spec, pageable).map(s -> Map.of("id", s.getId(), "name", s.getName(), "url", s.getUrl()));
   }
 
   public Page<Site> search(String email,
-                           Long clientId,
-                           Site.SiteEnvironment environment,
-                           Site.SiteType type,
-                           Site.SiteCms cms,
-                           Site.SiteStatus status,
-                           String q,
-                           String createdFrom,
-                           String createdTo,
-                           Pageable pageable) {
+      Long clientId,
+      Site.SiteEnvironment environment,
+      Site.SiteType type,
+      Site.SiteCms cms,
+      Site.SiteStatus status,
+      String q,
+      String createdFrom,
+      String createdTo,
+      Pageable pageable) {
     var current = userRepo.findByEmail(email).orElseThrow();
 
-    Specification<Site> spec = (r,qb,cb) -> cb.conjunction();
+    Specification<Site> spec = (r, qb, cb) -> cb.conjunction();
 
     if (current.getRole() == User.Role.CLIENT) {
       Long scopedClientId = (current.getClient() != null) ? current.getClient().getId() : -1L;
-      spec = spec.and((r,qb,cb) -> cb.equal(r.get("client").get("id"), scopedClientId));
+      spec = spec.and((r, qb, cb) -> cb.equal(r.get("client").get("id"), scopedClientId));
     } else {
       if (clientId != null) {
-        spec = spec.and((r,qb,cb) -> cb.equal(r.get("client").get("id"), clientId));
+        spec = spec.and((r, qb, cb) -> cb.equal(r.get("client").get("id"), clientId));
       }
     }
 
-    if (environment != null) spec = spec.and((r,qb,cb) -> cb.equal(r.get("environment"), environment));
-    if (type != null)        spec = spec.and((r,qb,cb) -> cb.equal(r.get("type"), type));
-    if (cms != null)         spec = spec.and((r,qb,cb) -> cb.equal(r.get("cms"), cms));
-    if (status != null)      spec = spec.and((r,qb,cb) -> cb.equal(r.get("status"), status));
+    if (environment != null)
+      spec = spec.and((r, qb, cb) -> cb.equal(r.get("environment"), environment));
+    if (type != null)
+      spec = spec.and((r, qb, cb) -> cb.equal(r.get("type"), type));
+    if (cms != null)
+      spec = spec.and((r, qb, cb) -> cb.equal(r.get("cms"), cms));
+    if (status != null)
+      spec = spec.and((r, qb, cb) -> cb.equal(r.get("status"), status));
 
     if (q != null && !q.isBlank()) {
       String like = "%" + q.trim().toLowerCase() + "%";
-      spec = spec.and((r,qb,cb) -> cb.or(
+      spec = spec.and((r, qb, cb) -> cb.or(
           cb.like(cb.lower(r.get("name")), like),
           cb.like(cb.lower(r.get("url")), like),
-          cb.like(cb.lower(r.get("hostingProvider")), like)
-      ));
+          cb.like(cb.lower(r.get("hostingProvider")), like)));
     }
 
     var tz = ZoneId.of("Europe/Paris");
     if (createdFrom != null && !createdFrom.isBlank()) {
       var from = LocalDate.parse(createdFrom).atStartOfDay(tz).toInstant();
-      spec = spec.and((r,qb,cb) -> cb.greaterThanOrEqualTo(r.get("createdAt"), from));
+      spec = spec.and((r, qb, cb) -> cb.greaterThanOrEqualTo(r.get("createdAt"), from));
     }
     if (createdTo != null && !createdTo.isBlank()) {
       var toExcl = LocalDate.parse(createdTo).plusDays(1).atStartOfDay(tz).toInstant();
-      spec = spec.and((r,qb,cb) -> cb.lessThan(r.get("createdAt"), toExcl));
+      spec = spec.and((r, qb, cb) -> cb.lessThan(r.get("createdAt"), toExcl));
     }
 
     return repo.findAll(spec, pageable);
