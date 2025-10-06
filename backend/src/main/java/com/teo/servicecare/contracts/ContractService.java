@@ -28,7 +28,7 @@ public class ContractService {
   private final UserRepository userRepo;
 
   public ContractService(ContractRepository repo, ClientRepository clientRepo,
-                         SiteRepository siteRepo, UserRepository userRepo) {
+      SiteRepository siteRepo, UserRepository userRepo) {
     this.repo = repo;
     this.clientRepo = clientRepo;
     this.siteRepo = siteRepo;
@@ -38,7 +38,7 @@ public class ContractService {
   public PageResponse<ContractResponse> list(Pageable pageable) {
     Page<Contract> page = repo.findAll(pageable);
     return PageResponse.map(page, ContractResponse::from);
-}   
+  }
 
   public ContractResponse getVisibleTo(String email, Long id) {
     var current = userRepo.findByEmail(email).orElseThrow();
@@ -103,8 +103,10 @@ public class ContractService {
   public ContractResponse update(Long id, ContractUpdateRequest in) {
     Contract c = repo.findById(id).orElseThrow();
 
-    if (in.getName() != null) c.setName(in.getName());
-    if (in.getDescription() != null) c.setDescription(in.getDescription());
+    if (in.getName() != null)
+      c.setName(in.getName());
+    if (in.getDescription() != null)
+      c.setDescription(in.getDescription());
 
     if (in.getClientId() != null) {
       Client client = clientRepo.findById(in.getClientId()).orElseThrow();
@@ -116,41 +118,65 @@ public class ContractService {
       c.setSites(sites);
     }
 
-    if (in.getStartDate() != null) c.setStartDate(in.getStartDate());
-    if (in.getEndDate() != null) c.setEndDate(in.getEndDate());
-    if (in.getAutoRenew() != null) c.setAutoRenew(in.getAutoRenew());
-    if (in.getNoticeDays() != null) c.setNoticeDays(in.getNoticeDays());
+    if (in.getStartDate() != null)
+      c.setStartDate(in.getStartDate());
+    if (in.getEndDate() != null)
+      c.setEndDate(in.getEndDate());
+    if (in.getAutoRenew() != null)
+      c.setAutoRenew(in.getAutoRenew());
+    if (in.getNoticeDays() != null)
+      c.setNoticeDays(in.getNoticeDays());
 
-    if (in.getTimezone() != null) c.setTimezone(in.getTimezone());
-    if (in.getSupportDays() != null) c.setSupportDays(in.getSupportDays());
-    if (in.getSupportHoursStart() != null) c.setSupportHoursStart(in.getSupportHoursStart());
-    if (in.getSupportHoursEnd() != null) c.setSupportHoursEnd(in.getSupportHoursEnd());
+    if (in.getTimezone() != null)
+      c.setTimezone(in.getTimezone());
+    if (in.getSupportDays() != null)
+      c.setSupportDays(in.getSupportDays());
+    if (in.getSupportHoursStart() != null)
+      c.setSupportHoursStart(in.getSupportHoursStart());
+    if (in.getSupportHoursEnd() != null)
+      c.setSupportHoursEnd(in.getSupportHoursEnd());
 
-    if (in.getMeasureWindow() != null) c.setMeasureWindow(in.getMeasureWindow());
-    if (in.getPauseOnWaiting() != null) c.setPauseOnWaiting(in.getPauseOnWaiting());
+    if (in.getMeasureWindow() != null)
+      c.setMeasureWindow(in.getMeasureWindow());
+    if (in.getPauseOnWaiting() != null)
+      c.setPauseOnWaiting(in.getPauseOnWaiting());
 
-    if (in.getRespCritHours() != null) c.setRespCritHours(in.getRespCritHours());
-    if (in.getRespHighHours() != null) c.setRespHighHours(in.getRespHighHours());
-    if (in.getRespMediumHours() != null) c.setRespMediumHours(in.getRespMediumHours());
-    if (in.getRespLowHours() != null) c.setRespLowHours(in.getRespLowHours());
+    if (in.getRespCritHours() != null)
+      c.setRespCritHours(in.getRespCritHours());
+    if (in.getRespHighHours() != null)
+      c.setRespHighHours(in.getRespHighHours());
+    if (in.getRespMediumHours() != null)
+      c.setRespMediumHours(in.getRespMediumHours());
+    if (in.getRespLowHours() != null)
+      c.setRespLowHours(in.getRespLowHours());
 
-    if (in.getResoCritHours() != null) c.setResoCritHours(in.getResoCritHours());
-    if (in.getResoHighHours() != null) c.setResoHighHours(in.getResoHighHours());
-    if (in.getResoMediumHours() != null) c.setResoMediumHours(in.getResoMediumHours());
-    if (in.getResoLowHours() != null) c.setResoLowHours(in.getResoLowHours());
+    if (in.getResoCritHours() != null)
+      c.setResoCritHours(in.getResoCritHours());
+    if (in.getResoHighHours() != null)
+      c.setResoHighHours(in.getResoHighHours());
+    if (in.getResoMediumHours() != null)
+      c.setResoMediumHours(in.getResoMediumHours());
+    if (in.getResoLowHours() != null)
+      c.setResoLowHours(in.getResoLowHours());
 
-    if (in.getIncludedHoursMonth() != null) c.setIncludedHoursMonth(in.getIncludedHoursMonth());
-    if (in.getMaxTicketsMonth() != null) c.setMaxTicketsMonth(in.getMaxTicketsMonth());
-    if (in.getOvertimeRate() != null) c.setOvertimeRate(in.getOvertimeRate());
-    if (in.getEmergencyRate() != null) c.setEmergencyRate(in.getEmergencyRate());
+    if (in.getIncludedHoursMonth() != null)
+      c.setIncludedHoursMonth(in.getIncludedHoursMonth());
+    if (in.getMaxTicketsMonth() != null)
+      c.setMaxTicketsMonth(in.getMaxTicketsMonth());
+    if (in.getOvertimeRate() != null)
+      c.setOvertimeRate(in.getOvertimeRate());
+    if (in.getEmergencyRate() != null)
+      c.setEmergencyRate(in.getEmergencyRate());
 
-    if (in.getStatus() != null) c.setStatus(in.getStatus());
+    if (in.getStatus() != null)
+      c.setStatus(in.getStatus());
 
     return ContractResponse.from(repo.save(c));
   }
 
   public void delete(Long id) {
-    if (!repo.existsById(id)) throw new IllegalArgumentException("contract_not_found");
+    if (!repo.existsById(id))
+      throw new IllegalArgumentException("contract_not_found");
     repo.deleteById(id);
   }
 
@@ -165,46 +191,47 @@ public class ContractService {
       String startTo,
       String endFrom,
       String endTo,
-      Pageable pageable
-  ) {
+      Pageable pageable) {
     var current = userRepo.findByEmail(email).orElseThrow();
 
-    Specification<Contract> spec = (r,qb,cb) -> cb.conjunction();
+    Specification<Contract> spec = (r, qb, cb) -> cb.conjunction();
 
     if (current.getRole() != User.Role.ADMIN) {
       Long scopedClientId = (current.getClient() != null) ? current.getClient().getId() : -1L;
-      spec = spec.and((r,qb,cb) -> cb.equal(r.get("client").get("id"), scopedClientId));
+      spec = spec.and((r, qb, cb) -> cb.equal(r.get("client").get("id"), scopedClientId));
     } else if (clientId != null) {
-      spec = spec.and((r,qb,cb) -> cb.equal(r.get("client").get("id"), clientId));
+      spec = spec.and((r, qb, cb) -> cb.equal(r.get("client").get("id"), clientId));
     }
 
-    if (status != null)        spec = spec.and((r,qb,cb) -> cb.equal(r.get("status"), status));
-    if (measureWindow != null) spec = spec.and((r,qb,cb) -> cb.equal(r.get("measureWindow"), measureWindow));
-    if (supportDays != null)   spec = spec.and((r,qb,cb) -> cb.equal(r.get("supportDays"), supportDays));
+    if (status != null)
+      spec = spec.and((r, qb, cb) -> cb.equal(r.get("status"), status));
+    if (measureWindow != null)
+      spec = spec.and((r, qb, cb) -> cb.equal(r.get("measureWindow"), measureWindow));
+    if (supportDays != null)
+      spec = spec.and((r, qb, cb) -> cb.equal(r.get("supportDays"), supportDays));
 
     if (q != null && !q.isBlank()) {
       String like = "%" + q.trim().toLowerCase() + "%";
-      spec = spec.and((r,qb,cb) -> cb.or(
+      spec = spec.and((r, qb, cb) -> cb.or(
           cb.like(cb.lower(r.get("name")), like),
-          cb.like(r.get("description"), "%" + q.trim() + "%")
-      ));
+          cb.like(r.get("description"), "%" + q.trim() + "%")));
     }
 
     if (startFrom != null && !startFrom.isBlank()) {
       var d = java.time.LocalDate.parse(startFrom);
-      spec = spec.and((r,qb,cb) -> cb.greaterThanOrEqualTo(r.get("startDate"), d));
+      spec = spec.and((r, qb, cb) -> cb.greaterThanOrEqualTo(r.get("startDate"), d));
     }
     if (startTo != null && !startTo.isBlank()) {
       var d = java.time.LocalDate.parse(startTo);
-      spec = spec.and((r,qb,cb) -> cb.lessThanOrEqualTo(r.get("startDate"), d));
+      spec = spec.and((r, qb, cb) -> cb.lessThanOrEqualTo(r.get("startDate"), d));
     }
     if (endFrom != null && !endFrom.isBlank()) {
       var d = java.time.LocalDate.parse(endFrom);
-      spec = spec.and((r,qb,cb) -> cb.greaterThanOrEqualTo(r.get("endDate"), d));
+      spec = spec.and((r, qb, cb) -> cb.greaterThanOrEqualTo(r.get("endDate"), d));
     }
     if (endTo != null && !endTo.isBlank()) {
       var d = java.time.LocalDate.parse(endTo);
-      spec = spec.and((r,qb,cb) -> cb.lessThanOrEqualTo(r.get("endDate"), d));
+      spec = spec.and((r, qb, cb) -> cb.lessThanOrEqualTo(r.get("endDate"), d));
     }
 
     Page<Contract> page = repo.findAll(spec, pageable);

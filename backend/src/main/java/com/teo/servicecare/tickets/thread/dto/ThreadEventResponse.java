@@ -5,7 +5,9 @@ import java.time.LocalDateTime;
 
 public class ThreadEventResponse {
 
-  public enum Kind { COMMENT, INTERVENTION, ATTACHMENT }
+  public enum Kind {
+    COMMENT, INTERVENTION, ATTACHMENT
+  }
 
   private Kind kind;
   private Long id;
@@ -43,8 +45,7 @@ public class ThreadEventResponse {
       Intervention.Type type, Intervention.Status status,
       String title, Long technicianUserId,
       LocalDateTime scheduledStart, LocalDateTime scheduledEnd,
-      LocalDateTime actualStart, LocalDateTime actualEnd
-  ) {
+      LocalDateTime actualStart, LocalDateTime actualEnd) {
     var e = new ThreadEventResponse();
     e.kind = Kind.INTERVENTION;
     e.id = id;
@@ -63,8 +64,7 @@ public class ThreadEventResponse {
   public static ThreadEventResponse fromAttachment(
       Long id, LocalDateTime at,
       String originalName, String contentType, Long size,
-      String downloadUrl
-  ) {
+      String downloadUrl) {
     var e = new ThreadEventResponse();
     e.kind = Kind.ATTACHMENT;
     e.id = id;
@@ -76,24 +76,71 @@ public class ThreadEventResponse {
     return e;
   }
 
-  public Kind getKind() { return kind; }
-  public Long getId() { return id; }
-  public LocalDateTime getAt() { return at; }
+  public Kind getKind() {
+    return kind;
+  }
 
-  public String getAuthorName() { return authorName; }
-  public String getBody() { return body; }
+  public Long getId() {
+    return id;
+  }
 
-  public Intervention.Type getInterventionType() { return interventionType; }
-  public Intervention.Status getInterventionStatus() { return interventionStatus; }
-  public String getTitle() { return title; }
-  public Long getTechnicianUserId() { return technicianUserId; }
-  public LocalDateTime getScheduledStart() { return scheduledStart; }
-  public LocalDateTime getScheduledEnd() { return scheduledEnd; }
-  public LocalDateTime getActualStart() { return actualStart; }
-  public LocalDateTime getActualEnd() { return actualEnd; }
+  public LocalDateTime getAt() {
+    return at;
+  }
 
-  public String getOriginalName() { return originalName; }
-  public String getContentType() { return contentType; }
-  public Long getSize() { return size; }
-  public String getDownloadUrl() { return downloadUrl; }
+  public String getAuthorName() {
+    return authorName;
+  }
+
+  public String getBody() {
+    return body;
+  }
+
+  public Intervention.Type getInterventionType() {
+    return interventionType;
+  }
+
+  public Intervention.Status getInterventionStatus() {
+    return interventionStatus;
+  }
+
+  public String getTitle() {
+    return title;
+  }
+
+  public Long getTechnicianUserId() {
+    return technicianUserId;
+  }
+
+  public LocalDateTime getScheduledStart() {
+    return scheduledStart;
+  }
+
+  public LocalDateTime getScheduledEnd() {
+    return scheduledEnd;
+  }
+
+  public LocalDateTime getActualStart() {
+    return actualStart;
+  }
+
+  public LocalDateTime getActualEnd() {
+    return actualEnd;
+  }
+
+  public String getOriginalName() {
+    return originalName;
+  }
+
+  public String getContentType() {
+    return contentType;
+  }
+
+  public Long getSize() {
+    return size;
+  }
+
+  public String getDownloadUrl() {
+    return downloadUrl;
+  }
 }

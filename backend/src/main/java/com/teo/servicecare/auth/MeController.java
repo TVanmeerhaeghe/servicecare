@@ -37,8 +37,7 @@ public class MeController {
         "canCommentInternal", (isAdmin || isAgent || isTechnician),
         "canCreateTicket", (isAdmin || isAgent || isTechnician || isClient),
         "canPlanIntervention", (isAdmin || isAgent || isTechnician),
-        "isClientScoped", isClient
-    );
+        "isClientScoped", isClient);
 
     return Map.ofEntries(
         Map.entry("id", u.getId()),
@@ -52,7 +51,6 @@ public class MeController {
         Map.entry("avatarUrl", u.getAvatarUrl()),
         Map.entry("clientId", clientId),
         Map.entry("clientName", clientName),
-        Map.entry("permissions", permissions)
-    );
+        Map.entry("permissions", permissions));
   }
 }

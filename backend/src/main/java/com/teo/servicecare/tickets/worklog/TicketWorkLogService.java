@@ -23,8 +23,8 @@ public class TicketWorkLogService {
   private final UserRepository userRepo;
 
   public TicketWorkLogService(TicketWorkLogRepository repo,
-                              TicketRepository ticketRepo,
-                              UserRepository userRepo) {
+      TicketRepository ticketRepo,
+      UserRepository userRepo) {
     this.repo = repo;
     this.ticketRepo = ticketRepo;
     this.userRepo = userRepo;
@@ -32,15 +32,18 @@ public class TicketWorkLogService {
 
   private Ticket guardTicketVisible(Long ticketId, String username) {
     var t = ticketRepo.findById(ticketId).orElseThrow();
-    if (t.getDeletedAt() != null) throw new IllegalArgumentException("ticket_deleted");
+    if (t.getDeletedAt() != null)
+      throw new IllegalArgumentException("ticket_deleted");
 
     var current = userRepo.findByEmail(username).orElseThrow();
-    if (current.getRole() == User.Role.ADMIN || current.getRole() == User.Role.AGENT || current.getRole() == User.Role.TECHNICIAN) {
+    if (current.getRole() == User.Role.ADMIN || current.getRole() == User.Role.AGENT
+        || current.getRole() == User.Role.TECHNICIAN) {
       return t;
     }
     if (current.getRole() == User.Role.CLIENT) {
       Long cid = current.getClient() != null ? current.getClient().getId() : null;
-      if (cid != null && cid.equals(t.getClientId())) return t;
+      if (cid != null && cid.equals(t.getClientId()))
+        return t;
     }
     throw new org.springframework.security.access.AccessDeniedException("forbidden");
   }
@@ -55,10 +58,9 @@ public class TicketWorkLogService {
   public Page<TicketWorkLogResponse> list(Long ticketId, String username, Pageable pageable) {
     guardTicketVisible(ticketId, username);
 
-    Specification<TicketWorkLog> spec = (r,q,cb) -> cb.and(
+    Specification<TicketWorkLog> spec = (r, q, cb) -> cb.and(
         cb.equal(r.get("ticketId"), ticketId),
-        cb.isNull(r.get("deletedAt"))
-    );
+        cb.isNull(r.get("deletedAt")));
     return repo.findAll(spec, pageable).map(TicketWorkLogResponse::from);
   }
 
@@ -95,11 +97,15 @@ public class TicketWorkLogService {
   public TicketWorkLogResponse update(Long id, TicketWorkLogUpdateRequest in, String username) {
     var w = guardLogVisible(id, username);
     var t = ticketRepo.findById(w.getTicketId()).orElseThrow();
-    if (t.getDeletedAt() != null) throw new IllegalArgumentException("ticket_deleted");
+    if (t.getDeletedAt() != null)
+      throw new IllegalArgumentException("ticket_deleted");
 
-    if (in.getStartedAt() != null) w.setStartedAt(in.getStartedAt());
-    if (in.getEndedAt() != null) w.setEndedAt(in.getEndedAt());
-    if (in.getNote() != null) w.setNote(in.getNote());
+    if (in.getStartedAt() != null)
+      w.setStartedAt(in.getStartedAt());
+    if (in.getEndedAt() != null)
+      w.setEndedAt(in.getEndedAt());
+    if (in.getNote() != null)
+      w.setNote(in.getNote());
 
     if (in.getMinutes() != null) {
       w.setMinutes(Math.max(0, in.getMinutes()));
@@ -115,13 +121,13 @@ public class TicketWorkLogService {
     var t = guardTicketVisible(ticketId, username);
     var current = userRepo.findByEmail(username).orElseThrow();
 
-    Specification<TicketWorkLog> activeSpec = (r,q,cb) -> cb.and(
+    Specification<TicketWorkLog> activeSpec = (r, q, cb) -> cb.and(
         cb.isNull(r.get("deletedAt")),
         cb.isNull(r.get("endedAt")),
-        cb.equal(r.get("userId"), current.getId())
-    );
-    boolean hasActive = repo.findAll(activeSpec, PageRequest.of(0,1)).hasContent();
-    if (hasActive) throw new IllegalStateException("active_log_exists");
+        cb.equal(r.get("userId"), current.getId()));
+    boolean hasActive = repo.findAll(activeSpec, PageRequest.of(0, 1)).hasContent();
+    if (hasActive)
+      throw new IllegalStateException("active_log_exists");
 
     var w = new TicketWorkLog();
     w.setTicketId(t.getId());
@@ -138,18 +144,19 @@ public class TicketWorkLogService {
   public TicketWorkLogResponse stop(Long maybeTicketId, String username) {
     var current = userRepo.findByEmail(username).orElseThrow();
 
-    Specification<TicketWorkLog> activeSpec = (r,q,cb) -> {
+    Specification<TicketWorkLog> activeSpec = (r, q, cb) -> {
       var base = cb.and(cb.isNull(r.get("deletedAt")),
-                        cb.isNull(r.get("endedAt")),
-                        cb.equal(r.get("userId"), current.getId()));
+          cb.isNull(r.get("endedAt")),
+          cb.equal(r.get("userId"), current.getId()));
       if (maybeTicketId != null) {
         base = cb.and(base, cb.equal(r.get("ticketId"), maybeTicketId));
       }
       return base;
     };
 
-    var page = repo.findAll(activeSpec, PageRequest.of(0,1));
-    if (!page.hasContent()) throw new IllegalStateException("no_active_log");
+    var page = repo.findAll(activeSpec, PageRequest.of(0, 1));
+    if (!page.hasContent())
+      throw new IllegalStateException("no_active_log");
 
     var w = page.getContent().get(0);
     guardTicketVisible(w.getTicketId(), username);
@@ -167,7 +174,8 @@ public class TicketWorkLogService {
 
   public void delete(Long id, String username) {
     var w = guardLogVisible(id, username);
-    if (w.getDeletedAt() != null) return;
+    if (w.getDeletedAt() != null)
+      return;
     w.setDeletedAt(LocalDateTime.now(APP_ZONE));
     repo.save(w);
   }

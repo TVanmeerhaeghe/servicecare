@@ -45,22 +45,75 @@ public class ClientResponse {
     return r;
   }
 
-  public Long getId() { return id; }
-  public String getName() { return name; }
-  public String getLegalName() { return legalName; }
-  public String getSiret() { return siret; }
-  public String getVatNumber() { return vatNumber; }
-  public String getContactFirstName() { return contactFirstName; }
-  public String getContactLastName() { return contactLastName; }
-  public String getContactEmail() { return contactEmail; }
-  public String getContactPhone() { return contactPhone; }
-  public String getBillingEmail() { return billingEmail; }
-  public String getTechnicalEmail() { return technicalEmail; }
-  public String getWebsiteUrl() { return websiteUrl; }
-  public String getAddressLine1() { return addressLine1; }
-  public String getPostalCode() { return postalCode; }
-  public String getCity() { return city; }
-  public String getCountryCode() { return countryCode; }
-  public String getCurrencyCode() { return currencyCode; }
-  public String getStatus() { return status; }
+  public Long getId() {
+    return id;
+  }
+
+  public String getName() {
+    return name;
+  }
+
+  public String getLegalName() {
+    return legalName;
+  }
+
+  public String getSiret() {
+    return siret;
+  }
+
+  public String getVatNumber() {
+    return vatNumber;
+  }
+
+  public String getContactFirstName() {
+    return contactFirstName;
+  }
+
+  public String getContactLastName() {
+    return contactLastName;
+  }
+
+  public String getContactEmail() {
+    return contactEmail;
+  }
+
+  public String getContactPhone() {
+    return contactPhone;
+  }
+
+  public String getBillingEmail() {
+    return billingEmail;
+  }
+
+  public String getTechnicalEmail() {
+    return technicalEmail;
+  }
+
+  public String getWebsiteUrl() {
+    return websiteUrl;
+  }
+
+  public String getAddressLine1() {
+    return addressLine1;
+  }
+
+  public String getPostalCode() {
+    return postalCode;
+  }
+
+  public String getCity() {
+    return city;
+  }
+
+  public String getCountryCode() {
+    return countryCode;
+  }
+
+  public String getCurrencyCode() {
+    return currencyCode;
+  }
+
+  public String getStatus() {
+    return status;
+  }
 }

@@ -8,18 +8,38 @@ import java.util.List;
 public class UploadsProperties {
   private String dir = "uploads";
   private long maxSizeBytes = 10 * 1024 * 1024;
-  private List<String> allowedContentTypes = List.of("image/png","image/jpeg","application/pdf");
-  private List<String> blockedExtensions = List.of(".exe",".bat",".cmd",".sh",".js",".jar");
+  private List<String> allowedContentTypes = List.of("image/png", "image/jpeg", "application/pdf");
+  private List<String> blockedExtensions = List.of(".exe", ".bat", ".cmd", ".sh", ".js", ".jar");
 
-  public String getDir() { return dir; }
-  public void setDir(String dir) { this.dir = dir; }
+  public String getDir() {
+    return dir;
+  }
 
-  public long getMaxSizeBytes() { return maxSizeBytes; }
-  public void setMaxSizeBytes(long maxSizeBytes) { this.maxSizeBytes = maxSizeBytes; }
+  public void setDir(String dir) {
+    this.dir = dir;
+  }
 
-  public List<String> getAllowedContentTypes() { return allowedContentTypes; }
-  public void setAllowedContentTypes(List<String> allowedContentTypes) { this.allowedContentTypes = allowedContentTypes; }
+  public long getMaxSizeBytes() {
+    return maxSizeBytes;
+  }
 
-  public List<String> getBlockedExtensions() { return blockedExtensions; }
-  public void setBlockedExtensions(List<String> blockedExtensions) { this.blockedExtensions = blockedExtensions; }
+  public void setMaxSizeBytes(long maxSizeBytes) {
+    this.maxSizeBytes = maxSizeBytes;
+  }
+
+  public List<String> getAllowedContentTypes() {
+    return allowedContentTypes;
+  }
+
+  public void setAllowedContentTypes(List<String> allowedContentTypes) {
+    this.allowedContentTypes = allowedContentTypes;
+  }
+
+  public List<String> getBlockedExtensions() {
+    return blockedExtensions;
+  }
+
+  public void setBlockedExtensions(List<String> blockedExtensions) {
+    this.blockedExtensions = blockedExtensions;
+  }
 }

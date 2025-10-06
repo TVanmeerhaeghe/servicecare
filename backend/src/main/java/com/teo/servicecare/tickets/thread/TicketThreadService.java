@@ -36,10 +36,10 @@ public class TicketThreadService {
   private final TicketAttachmentRepository attachmentRepo;
 
   public TicketThreadService(TicketRepository ticketRepo,
-                             UserRepository userRepo,
-                             TicketCommentRepository commentRepo,
-                             InterventionRepository interventionRepo,
-                             TicketAttachmentRepository attachmentRepo) {
+      UserRepository userRepo,
+      TicketCommentRepository commentRepo,
+      InterventionRepository interventionRepo,
+      TicketAttachmentRepository attachmentRepo) {
     this.ticketRepo = ticketRepo;
     this.userRepo = userRepo;
     this.commentRepo = commentRepo;
@@ -52,12 +52,11 @@ public class TicketThreadService {
     var t = ticketRepo.findById(ticketId).orElseThrow();
     enforceVisibility(current, t);
 
-    Specification<TicketComment> commentSpec = (r,q,cb) -> cb.and(
+    Specification<TicketComment> commentSpec = (r, q, cb) -> cb.and(
         cb.equal(r.get("ticketId"), ticketId),
-        cb.isNull(r.get("deletedAt"))
-    );
+        cb.isNull(r.get("deletedAt")));
     if (current.getRole() == User.Role.CLIENT) {
-      commentSpec = commentSpec.and((r,q,cb) -> cb.isFalse(r.get("internalOnly")));
+      commentSpec = commentSpec.and((r, q, cb) -> cb.isFalse(r.get("internalOnly")));
     }
     var commentEvents = commentRepo.findAll(commentSpec, Sort.by(Sort.Direction.ASC, "id"))
         .stream()
@@ -65,18 +64,15 @@ public class TicketThreadService {
             c.getId(),
             c.getCreatedAt(),
             c.getAuthorName(),
-            c.getBody()
-        ))
+            c.getBody()))
         .toList();
 
-    Specification<Intervention> intervSpec = (r,q,cb) -> cb.and(
+    Specification<Intervention> intervSpec = (r, q, cb) -> cb.and(
         cb.equal(r.get("ticketId"), ticketId),
-        cb.isNull(r.get("deletedAt"))
-    );
+        cb.isNull(r.get("deletedAt")));
     var interventionEvents = interventionRepo.findAll(
         intervSpec,
-        Sort.by(Sort.Direction.ASC, "scheduledStart").and(Sort.by("id"))
-    ).stream()
+        Sort.by(Sort.Direction.ASC, "scheduledStart").and(Sort.by("id"))).stream()
         .map(i -> {
           LocalDateTime at = i.getActualStart() != null ? i.getActualStart()
               : (i.getScheduledStart() != null ? i.getScheduledStart() : i.getCreatedAt());
@@ -85,15 +81,13 @@ public class TicketThreadService {
               i.getType(), i.getStatus(),
               i.getTitle(), i.getTechnicianUserId(),
               i.getScheduledStart(), i.getScheduledEnd(),
-              i.getActualStart(), i.getActualEnd()
-          );
+              i.getActualStart(), i.getActualEnd());
         })
         .toList();
 
-    Specification<TicketAttachment> attSpec = (r,q,cb) -> cb.and(
+    Specification<TicketAttachment> attSpec = (r, q, cb) -> cb.and(
         cb.equal(r.get("ticketId"), ticketId),
-        cb.isNull(r.get("deletedAt"))
-    );
+        cb.isNull(r.get("deletedAt")));
     var attachmentEvents = attachmentRepo.findAll(attSpec, Sort.by(Sort.Direction.ASC, "id"))
         .stream()
         .map(a -> {
@@ -102,14 +96,14 @@ public class TicketThreadService {
               .buildAndExpand(a.getId())
               .toUriString();
           LocalDateTime at = a.getCreatedAt();
-          if (at == null) at = LocalDateTime.now();
+          if (at == null)
+            at = LocalDateTime.now();
           return ThreadEventResponse.fromAttachment(
               a.getId(), at,
               a.getOriginalName(),
               a.getContentType(),
               a.getSize(),
-              downloadUrl
-          );
+              downloadUrl);
         })
         .toList();
 
@@ -127,7 +121,9 @@ public class TicketThreadService {
   }
 
   private void enforceVisibility(User user, Ticket t) {
-    if (user.getRole() == User.Role.ADMIN || user.getRole() == User.Role.AGENT || user.getRole() == User.Role.TECHNICIAN) return;
+    if (user.getRole() == User.Role.ADMIN || user.getRole() == User.Role.AGENT
+        || user.getRole() == User.Role.TECHNICIAN)
+      return;
     var userClientId = user.getClient() != null ? user.getClient().getId() : null;
     if (!(user.getRole() == User.Role.CLIENT && userClientId != null && userClientId.equals(t.getClientId()))) {
       throw new org.springframework.security.access.AccessDeniedException("forbidden");

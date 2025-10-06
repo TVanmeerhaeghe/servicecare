@@ -19,9 +19,23 @@ public class AssigneeResponse {
     return r;
   }
 
-  public Long getId() { return id; }
-  public String getEmail() { return email; }
-  public String getFirstName() { return firstName; }
-  public String getLastName() { return lastName; }
-  public String getPhone() { return phone; }
+  public Long getId() {
+    return id;
+  }
+
+  public String getEmail() {
+    return email;
+  }
+
+  public String getFirstName() {
+    return firstName;
+  }
+
+  public String getLastName() {
+    return lastName;
+  }
+
+  public String getPhone() {
+    return phone;
+  }
 }

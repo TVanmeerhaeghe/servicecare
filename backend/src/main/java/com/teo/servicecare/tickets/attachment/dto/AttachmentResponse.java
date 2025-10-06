@@ -28,13 +28,39 @@ public class AttachmentResponse {
     return r;
   }
 
-  public Long getId() { return id; }
-  public Long getTicketId() { return ticketId; }
-  public String getOriginalName() { return originalName; }
-  public String getFilename() { return filename; }
-  public String getContentType() { return contentType; }
-  public Long getSize() { return size; }
-  public String getStoragePath() { return storagePath; }
-  public LocalDateTime getCreatedAt() { return createdAt; }
-  public LocalDateTime getUpdatedAt() { return updatedAt; }
+  public Long getId() {
+    return id;
+  }
+
+  public Long getTicketId() {
+    return ticketId;
+  }
+
+  public String getOriginalName() {
+    return originalName;
+  }
+
+  public String getFilename() {
+    return filename;
+  }
+
+  public String getContentType() {
+    return contentType;
+  }
+
+  public Long getSize() {
+    return size;
+  }
+
+  public String getStoragePath() {
+    return storagePath;
+  }
+
+  public LocalDateTime getCreatedAt() {
+    return createdAt;
+  }
+
+  public LocalDateTime getUpdatedAt() {
+    return updatedAt;
+  }
 }

@@ -22,11 +22,11 @@ public class TicketSlaBreachJob {
   public void markBreaches() {
     var now = LocalDateTime.now(java.time.ZoneId.of("Europe/Paris"));
 
-    Specification<Ticket> notDeleted = (r,q,cb) -> cb.isNull(r.get("deletedAt"));
-    Specification<Ticket> respBreached = (r,q,cb) ->
-        cb.and(cb.isNull(r.get("respondedAt")), cb.lessThan(r.get("respondBy"), now));
-    Specification<Ticket> resoBreached = (r,q,cb) ->
-        cb.and(cb.isNull(r.get("resolvedAt")), cb.lessThan(r.get("resolveBy"), now));
+    Specification<Ticket> notDeleted = (r, q, cb) -> cb.isNull(r.get("deletedAt"));
+    Specification<Ticket> respBreached = (r, q, cb) -> cb.and(cb.isNull(r.get("respondedAt")),
+        cb.lessThan(r.get("respondBy"), now));
+    Specification<Ticket> resoBreached = (r, q, cb) -> cb.and(cb.isNull(r.get("resolvedAt")),
+        cb.lessThan(r.get("resolveBy"), now));
 
     var spec = notDeleted.and(respBreached.or(resoBreached));
 

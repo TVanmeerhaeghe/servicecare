@@ -26,34 +26,34 @@ public class TicketAttachmentController {
   @PostMapping(value = "/{ticketId}/attachments", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   @PreAuthorize("isAuthenticated()")
   public AttachmentResponse upload(@PathVariable Long ticketId,
-                                   @RequestPart("file") MultipartFile file,
-                                   @AuthenticationPrincipal UserDetails principal) throws Exception {
+      @RequestPart("file") MultipartFile file,
+      @AuthenticationPrincipal UserDetails principal) throws Exception {
     return service.upload(principal.getUsername(), ticketId, file);
   }
 
   @GetMapping("/{ticketId}/attachments")
   @PreAuthorize("isAuthenticated()")
   public Page<AttachmentResponse> list(@PathVariable Long ticketId,
-                                       @AuthenticationPrincipal UserDetails principal,
-                                       @RequestParam(defaultValue = "0") int page,
-                                       @RequestParam(defaultValue = "20") int size) {
+      @AuthenticationPrincipal UserDetails principal,
+      @RequestParam(defaultValue = "0") int page,
+      @RequestParam(defaultValue = "20") int size) {
     return service.list(
         principal.getUsername(),
         ticketId,
-        PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "id"))
-    );
+        PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "id")));
   }
 
   @GetMapping("/attachments/{id}/download")
   @PreAuthorize("isAuthenticated()")
   public ResponseEntity<FileSystemResource> download(@PathVariable Long id,
-                                                     @AuthenticationPrincipal UserDetails principal) throws Exception {
+      @AuthenticationPrincipal UserDetails principal) throws Exception {
     var meta = service.getMeta(principal.getUsername(), id);
     File f = service.getFile(principal.getUsername(), id);
 
     var res = new FileSystemResource(f);
     String contentType = Files.probeContentType(f.toPath());
-    if (contentType == null || contentType.isBlank()) contentType = "application/octet-stream";
+    if (contentType == null || contentType.isBlank())
+      contentType = "application/octet-stream";
 
     String filename = meta.getOriginalName().replace("\"", "");
 

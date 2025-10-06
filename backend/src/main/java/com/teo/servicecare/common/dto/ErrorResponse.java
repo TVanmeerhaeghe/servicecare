@@ -21,15 +21,38 @@ public class ErrorResponse {
       this.timestamp = Instant.now();
     }
 
-    public String getCode() { return code; }
-    public String getMessage() { return message; }
-    public Map<String, Object> getDetails() { return details; }
-    public String getPath() { return path; }
-    public String getMethod() { return method; }
-    public Instant getTimestamp() { return timestamp; }
+    public String getCode() {
+      return code;
+    }
+
+    public String getMessage() {
+      return message;
+    }
+
+    public Map<String, Object> getDetails() {
+      return details;
+    }
+
+    public String getPath() {
+      return path;
+    }
+
+    public String getMethod() {
+      return method;
+    }
+
+    public Instant getTimestamp() {
+      return timestamp;
+    }
   }
 
   private Body error;
-  public ErrorResponse(Body error) { this.error = error; }
-  public Body getError() { return error; }
+
+  public ErrorResponse(Body error) {
+    this.error = error;
+  }
+
+  public Body getError() {
+    return error;
+  }
 }

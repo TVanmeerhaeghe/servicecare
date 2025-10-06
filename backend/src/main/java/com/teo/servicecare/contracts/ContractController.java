@@ -23,18 +23,16 @@ public class ContractController {
   @GetMapping
   @PreAuthorize("hasRole('ADMIN')")
   public PageResponse<ContractResponse> all(
-      @PageableDefault(size = 20, sort = "id",
-          direction = org.springframework.data.domain.Sort.Direction.DESC)
-      Pageable pageable
-  ) {
+      @PageableDefault(size = 20, sort = "id", direction = org.springframework.data.domain.Sort.Direction.DESC) Pageable pageable) {
     return service.list(pageable);
   }
 
   @GetMapping("/{id}")
   @PreAuthorize("isAuthenticated()")
   public ContractResponse one(@PathVariable Long id,
-                              @AuthenticationPrincipal org.springframework.security.core.userdetails.User principal) {
-    if (principal == null) throw new org.springframework.security.access.AccessDeniedException("unauthorized");
+      @AuthenticationPrincipal org.springframework.security.core.userdetails.User principal) {
+    if (principal == null)
+      throw new org.springframework.security.access.AccessDeniedException("unauthorized");
     return service.getVisibleTo(principal.getUsername(), id);
   }
 
@@ -69,14 +67,10 @@ public class ContractController {
       @RequestParam(required = false) String endFrom,
       @RequestParam(required = false) String endTo,
       @AuthenticationPrincipal org.springframework.security.core.userdetails.User principal,
-      @PageableDefault(size = 20, sort = "id",
-          direction = org.springframework.data.domain.Sort.Direction.DESC)
-      Pageable pageable
-  ) {
+      @PageableDefault(size = 20, sort = "id", direction = org.springframework.data.domain.Sort.Direction.DESC) Pageable pageable) {
     return service.search(
         principal.getUsername(),
         clientId, status, measureWindow, supportDays, q,
-        startFrom, startTo, endFrom, endTo, pageable
-    );
+        startFrom, startTo, endFrom, endTo, pageable);
   }
 }

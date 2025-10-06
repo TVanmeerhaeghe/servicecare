@@ -29,17 +29,16 @@ public class ClientController {
   @GetMapping
   @PreAuthorize("hasRole('ADMIN')")
   public PageResponse<ClientResponse> all(
-      @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.DESC)
-      Pageable pageable
-  ) {
+      @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
     var page = service.list(pageable).map(ClientResponse::from);
     return PageResponse.from(page);
   }
 
   @GetMapping("/{id}")
   public ClientResponse one(@PathVariable Long id,
-                            @AuthenticationPrincipal org.springframework.security.core.userdetails.User principal) {
-    if (principal == null) throw new org.springframework.security.access.AccessDeniedException("unauthorized");
+      @AuthenticationPrincipal org.springframework.security.core.userdetails.User principal) {
+    if (principal == null)
+      throw new org.springframework.security.access.AccessDeniedException("unauthorized");
     var client = service.getVisibleTo(principal.getUsername(), id);
     return ClientResponse.from(client);
   }
@@ -66,11 +65,10 @@ public class ClientController {
 
   @GetMapping("/lookup")
   @PreAuthorize("isAuthenticated()")
-  public PageResponse<Map<String,Object>> lookup(
+  public PageResponse<Map<String, Object>> lookup(
       @RequestParam(required = false) String q,
       @AuthenticationPrincipal org.springframework.security.core.userdetails.User principal,
-      @PageableDefault(size = 20, sort = "name", direction = Sort.Direction.ASC) Pageable pageable
-  ) {
+      @PageableDefault(size = 20, sort = "name", direction = Sort.Direction.ASC) Pageable pageable) {
     var page = service.lookup(principal.getUsername(), q, pageable);
     return PageResponse.from(page);
   }
@@ -82,10 +80,9 @@ public class ClientController {
       @RequestParam(required = false) String q,
       @RequestParam(required = false) String createdFrom,
       @RequestParam(required = false) String createdTo,
-      @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.DESC) Pageable pageable
-  ) {
+      @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
     var page = service.search(status, q, createdFrom, createdTo, pageable)
-                      .map(ClientResponse::from);
+        .map(ClientResponse::from);
     return PageResponse.from(page);
   }
 }

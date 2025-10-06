@@ -10,11 +10,11 @@ import com.teo.servicecare.config.AppProperties;
 import com.teo.servicecare.config.JwtProperties;
 import com.teo.servicecare.config.UploadsProperties;
 
-@EnableConfigurationProperties({JwtProperties.class, AppProperties.class, UploadsProperties.class})
+@EnableConfigurationProperties({ JwtProperties.class, AppProperties.class, UploadsProperties.class })
 @SpringBootApplication
 @EnableScheduling
 public class ServiceCareApplication {
-  public static void main(String[] args) { 
+  public static void main(String[] args) {
     SpringApplication.run(ServiceCareApplication.class, args);
   }
 }

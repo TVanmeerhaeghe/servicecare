@@ -20,8 +20,8 @@ public class TicketCommentService {
   private final UserRepository userRepo;
 
   public TicketCommentService(TicketRepository ticketRepo,
-                              TicketCommentRepository repo,
-                              UserRepository userRepo) {
+      TicketCommentRepository repo,
+      UserRepository userRepo) {
     this.ticketRepo = ticketRepo;
     this.repo = repo;
     this.userRepo = userRepo;
@@ -29,7 +29,8 @@ public class TicketCommentService {
 
   public Page<TicketCommentResponse> list(Long ticketId, String username, Pageable pageable) {
     var t = ticketRepo.findById(ticketId).orElseThrow();
-    if (t.getDeletedAt() != null) throw new IllegalArgumentException("ticket_deleted");
+    if (t.getDeletedAt() != null)
+      throw new IllegalArgumentException("ticket_deleted");
 
     User current = userRepo.findByEmail(username).orElseThrow();
 
@@ -39,13 +40,12 @@ public class TicketCommentService {
         throw new org.springframework.security.access.AccessDeniedException("forbidden");
     }
 
-    Specification<TicketComment> spec = (r,q,cb) -> cb.and(
+    Specification<TicketComment> spec = (r, q, cb) -> cb.and(
         cb.equal(r.get("ticketId"), ticketId),
-        cb.isNull(r.get("deletedAt"))
-    );
+        cb.isNull(r.get("deletedAt")));
 
     if (current.getRole() == User.Role.CLIENT) {
-      spec = spec.and((r,q,cb) -> cb.isFalse(r.get("internalOnly")));
+      spec = spec.and((r, q, cb) -> cb.isFalse(r.get("internalOnly")));
     }
 
     return repo.findAll(spec, pageable).map(TicketCommentResponse::from);
@@ -53,7 +53,8 @@ public class TicketCommentService {
 
   public TicketCommentResponse create(TicketCommentCreateRequest in, String username) {
     var t = ticketRepo.findById(in.getTicketId()).orElseThrow();
-    if (t.getDeletedAt() != null) throw new IllegalArgumentException("ticket_deleted");
+    if (t.getDeletedAt() != null)
+      throw new IllegalArgumentException("ticket_deleted");
 
     User current = userRepo.findByEmail(username).orElseThrow();
 
@@ -82,7 +83,8 @@ public class TicketCommentService {
   public void delete(Long id, String username) {
     var c = repo.findById(id).orElseThrow();
     var t = ticketRepo.findById(c.getTicketId()).orElseThrow();
-    if (t.getDeletedAt() != null) throw new IllegalArgumentException("ticket_deleted");
+    if (t.getDeletedAt() != null)
+      throw new IllegalArgumentException("ticket_deleted");
 
     User current = userRepo.findByEmail(username).orElseThrow();
 
@@ -90,9 +92,11 @@ public class TicketCommentService {
         || current.getRole() == User.Role.AGENT
         || c.getAuthorUserId().equals(current.getId());
 
-    if (!canDelete) throw new org.springframework.security.access.AccessDeniedException("forbidden");
+    if (!canDelete)
+      throw new org.springframework.security.access.AccessDeniedException("forbidden");
 
-    if (c.getDeletedAt() != null) return;
+    if (c.getDeletedAt() != null)
+      return;
     c.setDeletedAt(java.time.LocalDateTime.now(APP_ZONE));
     repo.save(c);
   }

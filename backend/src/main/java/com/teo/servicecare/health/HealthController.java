@@ -9,6 +9,6 @@ import java.util.Map;
 public class HealthController {
   @GetMapping("/api/ping")
   public Map<String, String> ping() {
-    return Map.of("status","ok","ts", Instant.now().toString());
+    return Map.of("status", "ok", "ts", Instant.now().toString());
   }
 }

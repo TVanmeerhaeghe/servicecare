@@ -20,8 +20,7 @@ public class ApiExceptionHandler {
 
   private ErrorResponse wrap(String code, String message, HttpServletRequest req, Map<String, Object> details) {
     return new ErrorResponse(new ErrorResponse.Body(
-        code, message, details, req.getRequestURI(), req.getMethod()
-    ));
+        code, message, details, req.getRequestURI(), req.getMethod()));
   }
 
   // 400 - validations @Valid (body DTO)
@@ -29,7 +28,7 @@ public class ApiExceptionHandler {
   @ResponseStatus(HttpStatus.BAD_REQUEST)
   public ErrorResponse validation(MethodArgumentNotValidException ex, HttpServletRequest req) {
     var fieldErrors = ex.getBindingResult().getFieldErrors().stream()
-        .collect(Collectors.toMap(f -> f.getField(), f -> f.getDefaultMessage(), (a,b) -> a));
+        .collect(Collectors.toMap(f -> f.getField(), f -> f.getDefaultMessage(), (a, b) -> a));
     return wrap("VALIDATION_ERROR", "Validation failed", req, Map.of("fields", fieldErrors));
   }
 
@@ -37,7 +36,8 @@ public class ApiExceptionHandler {
   @ExceptionHandler(HttpMessageNotReadableException.class)
   @ResponseStatus(HttpStatus.BAD_REQUEST)
   public ErrorResponse badJson(HttpMessageNotReadableException ex, HttpServletRequest req) {
-    return wrap("BAD_REQUEST_BODY", "Malformed request body", req, Map.of("reason", ex.getMostSpecificCause().getMessage()));
+    return wrap("BAD_REQUEST_BODY", "Malformed request body", req,
+        Map.of("reason", ex.getMostSpecificCause().getMessage()));
   }
 
   // 400 - mauvais type de paramètre (ex: id=abc)
@@ -57,8 +57,7 @@ public class ApiExceptionHandler {
         "TYPE_MISMATCH",
         "Invalid parameter '" + ex.getName() + "'",
         req,
-        details
-    );
+        details);
   }
 
   // 400 - erreurs métier qu’on jette nous-mêmes
@@ -72,7 +71,7 @@ public class ApiExceptionHandler {
   @ExceptionHandler(java.util.NoSuchElementException.class)
   @org.springframework.web.bind.annotation.ResponseStatus(org.springframework.http.HttpStatus.NOT_FOUND)
   public ErrorResponse notFound(java.util.NoSuchElementException ex,
-                                jakarta.servlet.http.HttpServletRequest req) {
+      jakarta.servlet.http.HttpServletRequest req) {
     return wrap("NOT_FOUND", "Resource not found", req, java.util.Map.of("reason", ex.getMessage()));
   }
 
@@ -80,7 +79,8 @@ public class ApiExceptionHandler {
   @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
   @ResponseStatus(HttpStatus.METHOD_NOT_ALLOWED)
   public ErrorResponse methodNotAllowed(HttpRequestMethodNotSupportedException ex, HttpServletRequest req) {
-    return wrap("METHOD_NOT_ALLOWED", "HTTP method not allowed", req, Map.of("supported", ex.getSupportedHttpMethods()));
+    return wrap("METHOD_NOT_ALLOWED", "HTTP method not allowed", req,
+        Map.of("supported", ex.getSupportedHttpMethods()));
   }
 
   // 409 - contraintes DB (unique key, FK, etc.)
@@ -96,6 +96,5 @@ public class ApiExceptionHandler {
   public ErrorResponse serverError(Exception ex, HttpServletRequest req) {
     return wrap("INTERNAL_ERROR", "Unexpected error", req, Map.of("reason", ex.getMessage()));
   }
-
 
 }

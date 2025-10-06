@@ -29,10 +29,9 @@ public class DashboardService {
   public DashboardOverviewResponse overviewFor(String email) {
     User current = userRepo.findByEmail(email).orElseThrow();
 
-    boolean privileged =
-        current.getRole() == User.Role.ADMIN
-     || current.getRole() == User.Role.AGENT
-     || current.getRole() == User.Role.TECHNICIAN;
+    boolean privileged = current.getRole() == User.Role.ADMIN
+        || current.getRole() == User.Role.AGENT
+        || current.getRole() == User.Role.TECHNICIAN;
 
     Long scopedClientId = privileged ? null : (current.getClient() != null ? current.getClient().getId() : -1L);
 
@@ -42,30 +41,24 @@ public class DashboardService {
 
     Set<Ticket.TicketStatus> openStatuses = EnumSet.of(
         Ticket.TicketStatus.OPEN, Ticket.TicketStatus.ASSIGNED,
-        Ticket.TicketStatus.IN_PROGRESS, Ticket.TicketStatus.WAITING
-    );
+        Ticket.TicketStatus.IN_PROGRESS, Ticket.TicketStatus.WAITING);
     Set<Ticket.TicketStatus> closedOrCanceled = EnumSet.of(
-        Ticket.TicketStatus.CLOSED, Ticket.TicketStatus.CANCELED
-    );
+        Ticket.TicketStatus.CLOSED, Ticket.TicketStatus.CANCELED);
 
-    long openCount =
-        ticketRepo.countByDeletedAtIsNullAndStatusInAndClientIdScope(openStatuses, scopedClientId);
+    long openCount = ticketRepo.countByDeletedAtIsNullAndStatusInAndClientIdScope(openStatuses, scopedClientId);
 
-    long breachedOpenCount =
-        ticketRepo.countBreachedOpen(scopedClientId);
+    long breachedOpenCount = ticketRepo.countBreachedOpen(scopedClientId);
 
     Double avgRespMinutes = ticketRepo.avgResponseMinutes(scopedClientId);
     Double avgResoMinutes = ticketRepo.avgResolveMinutes(scopedClientId);
 
     double avgResponseHours = round1(((avgRespMinutes != null) ? avgRespMinutes : 0.0) / 60.0);
-    double avgResolveHours  = round1(((avgResoMinutes != null) ? avgResoMinutes : 0.0) / 60.0);
+    double avgResolveHours = round1(((avgResoMinutes != null) ? avgResoMinutes : 0.0) / 60.0);
 
-    long todayNewTickets =
-        ticketRepo.countCreatedBetween(scopedClientId, todayStart, tomorrowStart);
+    long todayNewTickets = ticketRepo.countCreatedBetween(scopedClientId, todayStart, tomorrowStart);
 
     Long me = current.getId();
-    long myAssignedOpen =
-        ticketRepo.countMyAssignedOpen(me, scopedClientId, closedOrCanceled);
+    long myAssignedOpen = ticketRepo.countMyAssignedOpen(me, scopedClientId, closedOrCanceled);
 
     return new DashboardOverviewResponse(
         openCount,
@@ -73,8 +66,7 @@ public class DashboardService {
         avgResponseHours,
         avgResolveHours,
         todayNewTickets,
-        myAssignedOpen
-    );
+        myAssignedOpen);
   }
 
   private double round1(double v) {

@@ -27,9 +27,7 @@ public class TicketCommentController {
   public PageResponse<TicketCommentResponse> list(
       @RequestParam Long ticketId,
       @AuthenticationPrincipal UserDetails principal,
-      @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.ASC)
-      Pageable pageable
-  ) {
+      @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.ASC) Pageable pageable) {
     var page = service.list(ticketId, principal.getUsername(), pageable);
     return PageResponse.from(page);
   }
@@ -37,7 +35,7 @@ public class TicketCommentController {
   @PostMapping
   @PreAuthorize("isAuthenticated()")
   public TicketCommentResponse create(@RequestBody @Valid TicketCommentCreateRequest in,
-                                      @AuthenticationPrincipal UserDetails principal) {
+      @AuthenticationPrincipal UserDetails principal) {
     return service.create(in, principal.getUsername());
   }
 

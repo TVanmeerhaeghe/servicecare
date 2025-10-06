@@ -16,14 +16,14 @@ public class JsonAuthenticationEntryPoint implements AuthenticationEntryPoint {
   private final ObjectMapper mapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
   @Override
-  public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException ex) throws IOException {
+  public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException ex)
+      throws IOException {
     var body = new ErrorResponse.Body(
         "UNAUTHORIZED",
         "Authentication is required",
         Map.of("reason", ex.getMessage()),
         request.getRequestURI(),
-        request.getMethod()
-    );
+        request.getMethod());
     var payload = new ErrorResponse(body);
 
     response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);

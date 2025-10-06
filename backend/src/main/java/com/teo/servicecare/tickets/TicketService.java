@@ -30,35 +30,35 @@ public class TicketService {
 
   private static final ZoneId APP_ZONE = ZoneId.of("Europe/Paris");
 
-  private static final Map<Ticket.TicketStatus, Set<String>> ALLOWED =
-      Map.of(
-        Ticket.TicketStatus.OPEN,        Set.of("ASSIGN", "START", "CANCEL"),
-        Ticket.TicketStatus.ASSIGNED,    Set.of("START", "WAIT", "CANCEL"),
-        Ticket.TicketStatus.IN_PROGRESS, Set.of("WAIT", "CLOSE", "CANCEL"),
-        Ticket.TicketStatus.WAITING,     Set.of("RESUME", "CANCEL"),
-        Ticket.TicketStatus.CLOSED,      Set.of(),
-        Ticket.TicketStatus.CANCELED,    Set.of()
-      );
+  private static final Map<Ticket.TicketStatus, Set<String>> ALLOWED = Map.of(
+      Ticket.TicketStatus.OPEN, Set.of("ASSIGN", "START", "CANCEL"),
+      Ticket.TicketStatus.ASSIGNED, Set.of("START", "WAIT", "CANCEL"),
+      Ticket.TicketStatus.IN_PROGRESS, Set.of("WAIT", "CLOSE", "CANCEL"),
+      Ticket.TicketStatus.WAITING, Set.of("RESUME", "CANCEL"),
+      Ticket.TicketStatus.CLOSED, Set.of(),
+      Ticket.TicketStatus.CANCELED, Set.of());
 
   public Page<Ticket> listVisible(String email, Pageable pageable) {
     User current = userRepo.findByEmail(email).orElseThrow();
-    Specification<Ticket> notDeleted = (r,q,cb) -> cb.isNull(r.get("deletedAt"));
+    Specification<Ticket> notDeleted = (r, q, cb) -> cb.isNull(r.get("deletedAt"));
 
     if (current.getRole() == User.Role.ADMIN || current.getRole() == User.Role.AGENT) {
       return repo.findAll(notDeleted, pageable);
     }
 
     Long userClientId = (current.getClient() != null) ? current.getClient().getId() : -1L;
-    Specification<Ticket> scoped = notDeleted.and((r,q,cb) -> cb.equal(r.get("clientId"), userClientId));
+    Specification<Ticket> scoped = notDeleted.and((r, q, cb) -> cb.equal(r.get("clientId"), userClientId));
     return repo.findAll(scoped, pageable);
   }
 
   public Ticket getVisible(String email, Long id) {
     var t = repo.findById(id).orElseThrow();
-    if (t.getDeletedAt() != null) throw new IllegalArgumentException("ticket_deleted");
+    if (t.getDeletedAt() != null)
+      throw new IllegalArgumentException("ticket_deleted");
 
     User current = userRepo.findByEmail(email).orElseThrow();
-    if (current.getRole() == User.Role.ADMIN || current.getRole() == User.Role.AGENT) return t;
+    if (current.getRole() == User.Role.ADMIN || current.getRole() == User.Role.AGENT)
+      return t;
 
     Long userClientId = current.getClient() != null ? current.getClient().getId() : null;
     if (current.getRole() == User.Role.CLIENT && userClientId != null && userClientId.equals(t.getClientId())) {
@@ -75,10 +75,12 @@ public class TicketService {
 
     Long clientIdToUse;
     if (current.getRole() == User.Role.CLIENT) {
-      if (current.getClient() == null) throw new IllegalArgumentException("client_scope_missing");
+      if (current.getClient() == null)
+        throw new IllegalArgumentException("client_scope_missing");
       clientIdToUse = current.getClient().getId();
     } else {
-      if (in.getClientId() == null) throw new IllegalArgumentException("clientId_required");
+      if (in.getClientId() == null)
+        throw new IllegalArgumentException("clientId_required");
       clientIdToUse = in.getClientId();
     }
 
@@ -106,7 +108,8 @@ public class TicketService {
   public Ticket update(String email, Long id, TicketUpdateRequest in) {
     User current = userRepo.findByEmail(email).orElseThrow();
     var t = repo.findById(id).orElseThrow();
-    if (t.getDeletedAt() != null) throw new IllegalArgumentException("ticket_deleted");
+    if (t.getDeletedAt() != null)
+      throw new IllegalArgumentException("ticket_deleted");
 
     if (current.getRole() == User.Role.CLIENT) {
       Long userClientId = (current.getClient() != null) ? current.getClient().getId() : null;
@@ -118,11 +121,16 @@ public class TicketService {
     var beforePriority = t.getPriority();
     var beforeStatus = t.getStatus();
 
-    if (in.getTitle() != null) t.setTitle(in.getTitle());
-    if (in.getDescription() != null) t.setDescription(in.getDescription());
-    if (in.getPriority() != null) t.setPriority(in.getPriority());
-    if (in.getAssigneeUserId() != null) t.setAssigneeUserId(in.getAssigneeUserId());
-    if (in.getWaitingReason() != null) t.setWaitingReason(in.getWaitingReason());
+    if (in.getTitle() != null)
+      t.setTitle(in.getTitle());
+    if (in.getDescription() != null)
+      t.setDescription(in.getDescription());
+    if (in.getPriority() != null)
+      t.setPriority(in.getPriority());
+    if (in.getAssigneeUserId() != null)
+      t.setAssigneeUserId(in.getAssigneeUserId());
+    if (in.getWaitingReason() != null)
+      t.setWaitingReason(in.getWaitingReason());
 
     if (in.getStatus() != null) {
       var newStatus = in.getStatus();
@@ -149,24 +157,29 @@ public class TicketService {
 
   public Ticket transition(Long id, String action) {
     var t = repo.findById(id).orElseThrow();
-    if (t.getDeletedAt() != null) throw new IllegalArgumentException("ticket_deleted");
+    if (t.getDeletedAt() != null)
+      throw new IllegalArgumentException("ticket_deleted");
 
     var allowed = ALLOWED.getOrDefault(t.getStatus(), Set.of());
-    if (!allowed.contains(action)) throw new IllegalArgumentException("transition_not_allowed");
+    if (!allowed.contains(action))
+      throw new IllegalArgumentException("transition_not_allowed");
 
     var now = LocalDateTime.now(APP_ZONE);
     switch (action) {
       case "ASSIGN" -> {
         t.setStatus(Ticket.TicketStatus.ASSIGNED);
-        if (t.getRespondedAt() == null) t.setRespondedAt(now);
+        if (t.getRespondedAt() == null)
+          t.setRespondedAt(now);
       }
       case "START" -> {
         t.setStatus(Ticket.TicketStatus.IN_PROGRESS);
-        if (t.getRespondedAt() == null) t.setRespondedAt(now);
+        if (t.getRespondedAt() == null)
+          t.setRespondedAt(now);
       }
       case "WAIT" -> {
         t.setStatus(Ticket.TicketStatus.WAITING);
-        if (t.getPauseStartedAt() == null) t.setPauseStartedAt(now);
+        if (t.getPauseStartedAt() == null)
+          t.setPauseStartedAt(now);
       }
       case "RESUME" -> {
         if (t.getPauseStartedAt() != null) {
@@ -178,7 +191,8 @@ public class TicketService {
       }
       case "CLOSE" -> {
         t.setStatus(Ticket.TicketStatus.CLOSED);
-        if (t.getResolvedAt() == null) t.setResolvedAt(now);
+        if (t.getResolvedAt() == null)
+          t.setResolvedAt(now);
       }
       case "CANCEL" -> t.setStatus(Ticket.TicketStatus.CANCELED);
       default -> throw new IllegalArgumentException("unknown_action");
@@ -192,41 +206,50 @@ public class TicketService {
 
   public void softDelete(Long id) {
     var t = repo.findById(id).orElseThrow();
-    if (t.getDeletedAt() != null) return;
+    if (t.getDeletedAt() != null)
+      return;
     t.setDeletedAt(LocalDateTime.now(APP_ZONE));
     repo.save(t);
   }
 
   public Ticket restore(Long id) {
     var t = repo.findById(id).orElseThrow();
-    if (t.getDeletedAt() == null) return t;
+    if (t.getDeletedAt() == null)
+      return t;
     t.setDeletedAt(null);
     return repo.save(t);
   }
 
   public Page<Ticket> search(String email,
-                             Long clientId, Long siteId, Long contractId, Long assigneeUserId,
-                             Ticket.TicketStatus status, Ticket.TicketPriority priority, Boolean slaBreached,
-                             String q, String createdFrom, String createdTo, String updatedFrom, String updatedTo,
-                             String respondByBefore, String resolveByBefore,
-                             Pageable pageable) {
+      Long clientId, Long siteId, Long contractId, Long assigneeUserId,
+      Ticket.TicketStatus status, Ticket.TicketPriority priority, Boolean slaBreached,
+      String q, String createdFrom, String createdTo, String updatedFrom, String updatedTo,
+      String respondByBefore, String resolveByBefore,
+      Pageable pageable) {
     var current = userRepo.findByEmail(email).orElseThrow();
-    Specification<Ticket> spec = (r,qb,cb) -> cb.isNull(r.get("deletedAt"));
+    Specification<Ticket> spec = (r, qb, cb) -> cb.isNull(r.get("deletedAt"));
 
     boolean isClient = current.getRole() == User.Role.CLIENT;
     if (isClient) {
       Long scopedClientId = (current.getClient() != null) ? current.getClient().getId() : -1L;
-      spec = spec.and((r,qb,cb) -> cb.equal(r.get("clientId"), scopedClientId));
+      spec = spec.and((r, qb, cb) -> cb.equal(r.get("clientId"), scopedClientId));
     } else {
-      if (clientId != null) spec = spec.and((r,qb,cb) -> cb.equal(r.get("clientId"), clientId));
+      if (clientId != null)
+        spec = spec.and((r, qb, cb) -> cb.equal(r.get("clientId"), clientId));
     }
 
-    if (siteId != null)         spec = spec.and((r,qb,cb) -> cb.equal(r.get("siteId"), siteId));
-    if (contractId != null)     spec = spec.and((r,qb,cb) -> cb.equal(r.get("contractId"), contractId));
-    if (assigneeUserId != null) spec = spec.and((r,qb,cb) -> cb.equal(r.get("assigneeUserId"), assigneeUserId));
-    if (status != null)         spec = spec.and((r,qb,cb) -> cb.equal(r.get("status"), status));
-    if (priority != null)       spec = spec.and((r,qb,cb) -> cb.equal(r.get("priority"), priority));
-    if (slaBreached != null)    spec = spec.and((r,qb,cb) -> cb.equal(r.get("slaBreached"), slaBreached));
+    if (siteId != null)
+      spec = spec.and((r, qb, cb) -> cb.equal(r.get("siteId"), siteId));
+    if (contractId != null)
+      spec = spec.and((r, qb, cb) -> cb.equal(r.get("contractId"), contractId));
+    if (assigneeUserId != null)
+      spec = spec.and((r, qb, cb) -> cb.equal(r.get("assigneeUserId"), assigneeUserId));
+    if (status != null)
+      spec = spec.and((r, qb, cb) -> cb.equal(r.get("status"), status));
+    if (priority != null)
+      spec = spec.and((r, qb, cb) -> cb.equal(r.get("priority"), priority));
+    if (slaBreached != null)
+      spec = spec.and((r, qb, cb) -> cb.equal(r.get("slaBreached"), slaBreached));
 
     if (q != null && !q.isBlank()) {
       String like = "%" + q.trim().toLowerCase() + "%";
@@ -242,27 +265,27 @@ public class TicketService {
 
     if (createdFrom != null && !createdFrom.isBlank()) {
       var from = LocalDate.parse(createdFrom).atStartOfDay();
-      spec = spec.and((r,qb,cb) -> cb.greaterThanOrEqualTo(r.get("createdAt"), from));
+      spec = spec.and((r, qb, cb) -> cb.greaterThanOrEqualTo(r.get("createdAt"), from));
     }
     if (createdTo != null && !createdTo.isBlank()) {
       var toExcl = LocalDate.parse(createdTo).plusDays(1).atStartOfDay();
-      spec = spec.and((r,qb,cb) -> cb.lessThan(r.get("createdAt"), toExcl));
+      spec = spec.and((r, qb, cb) -> cb.lessThan(r.get("createdAt"), toExcl));
     }
     if (updatedFrom != null && !updatedFrom.isBlank()) {
       var from = LocalDate.parse(updatedFrom).atStartOfDay();
-      spec = spec.and((r,qb,cb) -> cb.greaterThanOrEqualTo(r.get("updatedAt"), from));
+      spec = spec.and((r, qb, cb) -> cb.greaterThanOrEqualTo(r.get("updatedAt"), from));
     }
     if (updatedTo != null && !updatedTo.isBlank()) {
       var toExcl = LocalDate.parse(updatedTo).plusDays(1).atStartOfDay();
-      spec = spec.and((r,qb,cb) -> cb.lessThan(r.get("updatedAt"), toExcl));
+      spec = spec.and((r, qb, cb) -> cb.lessThan(r.get("updatedAt"), toExcl));
     }
     if (respondByBefore != null && !respondByBefore.isBlank()) {
       var dt = LocalDate.parse(respondByBefore).atStartOfDay(tz).toLocalDateTime();
-      spec = spec.and((r,qb,cb) -> cb.lessThanOrEqualTo(r.get("respondBy"), dt));
+      spec = spec.and((r, qb, cb) -> cb.lessThanOrEqualTo(r.get("respondBy"), dt));
     }
     if (resolveByBefore != null && !resolveByBefore.isBlank()) {
       var dt = LocalDate.parse(resolveByBefore).atStartOfDay(tz).toLocalDateTime();
-      spec = spec.and((r,qb,cb) -> cb.lessThanOrEqualTo(r.get("resolveBy"), dt));
+      spec = spec.and((r, qb, cb) -> cb.lessThanOrEqualTo(r.get("resolveBy"), dt));
     }
 
     return repo.findAll(spec, pageable);
@@ -271,25 +294,35 @@ public class TicketService {
   // --- helpers SLA ---
   private int targetRespondHours(Ticket.TicketPriority p, Contract c) {
     if (c == null) {
-      return switch (p) { case CRITICAL -> 1; case HIGH -> 4; case MEDIUM -> 8; case LOW -> 16; };
+      return switch (p) {
+        case CRITICAL -> 1;
+        case HIGH -> 4;
+        case MEDIUM -> 8;
+        case LOW -> 16;
+      };
     }
     return switch (p) {
       case CRITICAL -> c.getRespCritHours();
-      case HIGH     -> c.getRespHighHours();
-      case MEDIUM   -> c.getRespMediumHours();
-      case LOW      -> c.getRespLowHours();
+      case HIGH -> c.getRespHighHours();
+      case MEDIUM -> c.getRespMediumHours();
+      case LOW -> c.getRespLowHours();
     };
   }
 
   private int targetResolveHours(Ticket.TicketPriority p, Contract c) {
     if (c == null) {
-      return switch (p) { case CRITICAL -> 4; case HIGH -> 8; case MEDIUM -> 24; case LOW -> 48; };
+      return switch (p) {
+        case CRITICAL -> 4;
+        case HIGH -> 8;
+        case MEDIUM -> 24;
+        case LOW -> 48;
+      };
     }
     return switch (p) {
       case CRITICAL -> c.getResoCritHours();
-      case HIGH     -> c.getResoHighHours();
-      case MEDIUM   -> c.getResoMediumHours();
-      case LOW      -> c.getResoLowHours();
+      case HIGH -> c.getResoHighHours();
+      case MEDIUM -> c.getResoMediumHours();
+      case LOW -> c.getResoLowHours();
     };
   }
 
@@ -316,7 +349,7 @@ public class TicketService {
   }
 
   private long effectiveElapsedSeconds(Ticket t, LocalDateTime now,
-                                       Contract.MeasureWindow window, boolean pauseOnWaiting, Contract c) {
+      Contract.MeasureWindow window, boolean pauseOnWaiting, Contract c) {
     LocalDateTime start = t.getCreatedAt() != null ? t.getCreatedAt() : now;
     long base;
     if (window == Contract.MeasureWindow.CALENDAR || c == null) {
@@ -328,7 +361,8 @@ public class TicketService {
       base = businessElapsedSeconds(start, now, supportStart, supportEnd, monFriOnly);
     }
 
-    if (!pauseOnWaiting) return Math.max(base, 0);
+    if (!pauseOnWaiting)
+      return Math.max(base, 0);
 
     long paused = t.getPausedSeconds();
     if (t.getPauseStartedAt() != null) {
@@ -338,18 +372,19 @@ public class TicketService {
   }
 
   private long businessElapsedSeconds(LocalDateTime start, LocalDateTime now,
-                                      LocalTime supportStart, LocalTime supportEnd,
-                                      boolean monFriOnly) {
-    if (!now.isAfter(start)) return 0L;
+      LocalTime supportStart, LocalTime supportEnd,
+      boolean monFriOnly) {
+    if (!now.isAfter(start))
+      return 0L;
     LocalDate d = start.toLocalDate();
     LocalDate last = now.toLocalDate();
     long total = 0L;
     while (!d.isAfter(last)) {
       if (!monFriOnly || isMonToFri(d)) {
         LocalDateTime dayStart = LocalDateTime.of(d, supportStart);
-        LocalDateTime dayEnd   = LocalDateTime.of(d, supportEnd);
+        LocalDateTime dayEnd = LocalDateTime.of(d, supportEnd);
         LocalDateTime overlapStart = max(start, dayStart);
-        LocalDateTime overlapEnd   = min(now, dayEnd);
+        LocalDateTime overlapEnd = min(now, dayEnd);
         if (overlapEnd.isAfter(overlapStart)) {
           total += Duration.between(overlapStart, overlapEnd).getSeconds();
         }
@@ -358,7 +393,17 @@ public class TicketService {
     }
     return Math.max(total, 0);
   }
-  private boolean isMonToFri(LocalDate d) { int v = d.getDayOfWeek().getValue(); return v >= 1 && v <= 5; }
-  private LocalDateTime max(LocalDateTime a, LocalDateTime b) { return a.isAfter(b) ? a : b; }
-  private LocalDateTime min(LocalDateTime a, LocalDateTime b) { return a.isBefore(b) ? a : b; }
+
+  private boolean isMonToFri(LocalDate d) {
+    int v = d.getDayOfWeek().getValue();
+    return v >= 1 && v <= 5;
+  }
+
+  private LocalDateTime max(LocalDateTime a, LocalDateTime b) {
+    return a.isAfter(b) ? a : b;
+  }
+
+  private LocalDateTime min(LocalDateTime a, LocalDateTime b) {
+    return a.isBefore(b) ? a : b;
+  }
 }

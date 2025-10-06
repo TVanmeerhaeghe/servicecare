@@ -30,25 +30,21 @@ public class SecurityConfig {
 
   @Bean
   public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-      http
-          .csrf(csrf -> csrf.disable())
-          .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-          .authorizeHttpRequests(auth -> auth
-              .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-              .requestMatchers("/api/ping", "/api/auth/**").permitAll()
-              .anyRequest().authenticated()
-          )
-          .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
-          .exceptionHandling(ex -> ex
-              .authenticationEntryPoint(new JsonAuthenticationEntryPoint())
-              .accessDeniedHandler(new JsonAccessDeniedHandler())
-          )
-          .cors(Customizer.withDefaults());
+    http
+        .csrf(csrf -> csrf.disable())
+        .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        .authorizeHttpRequests(auth -> auth
+            .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+            .requestMatchers("/api/ping", "/api/auth/**").permitAll()
+            .anyRequest().authenticated())
+        .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
+        .exceptionHandling(ex -> ex
+            .authenticationEntryPoint(new JsonAuthenticationEntryPoint())
+            .accessDeniedHandler(new JsonAccessDeniedHandler()))
+        .cors(Customizer.withDefaults());
 
-      return http.build();
+    return http.build();
   }
-
-
 
   @Bean
   public PasswordEncoder passwordEncoder() {

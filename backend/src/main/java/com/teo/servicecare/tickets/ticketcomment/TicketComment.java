@@ -7,7 +7,8 @@ import java.time.LocalDateTime;
 @Table(name = "ticket_comments")
 public class TicketComment {
 
-  @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
   @Column(nullable = false)
@@ -34,19 +35,63 @@ public class TicketComment {
 
   private LocalDateTime deletedAt;
 
-  public Long getId() { return id; }
-  public Long getTicketId() { return ticketId; }
-  public void setTicketId(Long ticketId) { this.ticketId = ticketId; }
-  public Long getAuthorUserId() { return authorUserId; }
-  public void setAuthorUserId(Long authorUserId) { this.authorUserId = authorUserId; }
-  public String getAuthorName() { return authorName; }
-  public void setAuthorName(String authorName) { this.authorName = authorName; }
-  public String getBody() { return body; }
-  public void setBody(String body) { this.body = body; }
-  public boolean isInternalOnly() { return internalOnly; }
-  public void setInternalOnly(boolean internalOnly) { this.internalOnly = internalOnly; }
-  public LocalDateTime getCreatedAt() { return createdAt; }
-  public LocalDateTime getUpdatedAt() { return updatedAt; }
-  public LocalDateTime getDeletedAt() { return deletedAt; }
-  public void setDeletedAt(LocalDateTime deletedAt) { this.deletedAt = deletedAt; }
+  public Long getId() {
+    return id;
+  }
+
+  public Long getTicketId() {
+    return ticketId;
+  }
+
+  public void setTicketId(Long ticketId) {
+    this.ticketId = ticketId;
+  }
+
+  public Long getAuthorUserId() {
+    return authorUserId;
+  }
+
+  public void setAuthorUserId(Long authorUserId) {
+    this.authorUserId = authorUserId;
+  }
+
+  public String getAuthorName() {
+    return authorName;
+  }
+
+  public void setAuthorName(String authorName) {
+    this.authorName = authorName;
+  }
+
+  public String getBody() {
+    return body;
+  }
+
+  public void setBody(String body) {
+    this.body = body;
+  }
+
+  public boolean isInternalOnly() {
+    return internalOnly;
+  }
+
+  public void setInternalOnly(boolean internalOnly) {
+    this.internalOnly = internalOnly;
+  }
+
+  public LocalDateTime getCreatedAt() {
+    return createdAt;
+  }
+
+  public LocalDateTime getUpdatedAt() {
+    return updatedAt;
+  }
+
+  public LocalDateTime getDeletedAt() {
+    return deletedAt;
+  }
+
+  public void setDeletedAt(LocalDateTime deletedAt) {
+    this.deletedAt = deletedAt;
+  }
 }

@@ -7,7 +7,8 @@ import java.time.Instant;
 
 final class ClientSpecifications {
 
-  private ClientSpecifications() {}
+  private ClientSpecifications() {
+  }
 
   static Specification<Client> truePredicate() {
     return (r, q, cb) -> cb.conjunction();
@@ -39,8 +40,7 @@ final class ClientSpecifications {
         cb.like(cb.lower(r.get("websiteUrl")), like),
         cb.like(cb.lower(r.get("vatNumber")), like),
         cb.like(cb.lower(r.get("siret")), like),
-        cb.like(cb.lower(r.get("city")), like)
-    );
+        cb.like(cb.lower(r.get("city")), like));
   }
 
   static Specification<Client> createdAtGte(Instant from) {

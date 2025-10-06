@@ -26,12 +26,35 @@ public class TicketCommentResponse {
     return r;
   }
 
-  public Long getId() { return id; }
-  public Long getTicketId() { return ticketId; }
-  public Long getAuthorUserId() { return authorUserId; }
-  public String getAuthorName() { return authorName; }
-  public String getBody() { return body; }
-  public boolean isInternalOnly() { return internalOnly; }
-  public LocalDateTime getCreatedAt() { return createdAt; }
-  public LocalDateTime getUpdatedAt() { return updatedAt; }
+  public Long getId() {
+    return id;
+  }
+
+  public Long getTicketId() {
+    return ticketId;
+  }
+
+  public Long getAuthorUserId() {
+    return authorUserId;
+  }
+
+  public String getAuthorName() {
+    return authorName;
+  }
+
+  public String getBody() {
+    return body;
+  }
+
+  public boolean isInternalOnly() {
+    return internalOnly;
+  }
+
+  public LocalDateTime getCreatedAt() {
+    return createdAt;
+  }
+
+  public LocalDateTime getUpdatedAt() {
+    return updatedAt;
+  }
 }

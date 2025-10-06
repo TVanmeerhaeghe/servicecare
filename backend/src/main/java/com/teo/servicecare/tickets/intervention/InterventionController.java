@@ -28,8 +28,7 @@ public class InterventionController {
   public PageResponse<InterventionResponse> list(
       @RequestParam Long ticketId,
       @AuthenticationPrincipal UserDetails principal,
-      @PageableDefault(size = 20, sort = "scheduledStart", direction = Sort.Direction.ASC) Pageable pageable
-  ) {
+      @PageableDefault(size = 20, sort = "scheduledStart", direction = Sort.Direction.ASC) Pageable pageable) {
     var page = service.list(ticketId, principal.getUsername(), pageable);
     return PageResponse.from(page);
   }
@@ -37,37 +36,37 @@ public class InterventionController {
   @GetMapping("/{id}")
   @PreAuthorize("isAuthenticated()")
   public InterventionResponse get(@PathVariable Long id,
-                                  @AuthenticationPrincipal UserDetails principal) {
+      @AuthenticationPrincipal UserDetails principal) {
     return service.get(id, principal.getUsername());
   }
 
   @PostMapping
   @PreAuthorize("hasAnyRole('ADMIN','AGENT','TECHNICIAN')")
   public InterventionResponse create(@RequestBody @Valid InterventionCreateRequest in,
-                                     @AuthenticationPrincipal UserDetails principal) {
+      @AuthenticationPrincipal UserDetails principal) {
     return service.create(in, principal.getUsername());
   }
 
   @PutMapping("/{id}")
   @PreAuthorize("hasAnyRole('ADMIN','AGENT','TECHNICIAN')")
   public InterventionResponse update(@PathVariable Long id,
-                                     @RequestBody InterventionUpdateRequest in,
-                                     @AuthenticationPrincipal UserDetails principal) {
+      @RequestBody InterventionUpdateRequest in,
+      @AuthenticationPrincipal UserDetails principal) {
     return service.update(id, in, principal.getUsername());
   }
 
   @PostMapping("/{id}/transition")
   @PreAuthorize("hasAnyRole('ADMIN','AGENT','TECHNICIAN')")
   public InterventionResponse transition(@PathVariable Long id,
-                                         @RequestParam String action,
-                                         @AuthenticationPrincipal UserDetails principal) {
+      @RequestParam String action,
+      @AuthenticationPrincipal UserDetails principal) {
     return service.transition(id, action, principal.getUsername());
   }
 
   @DeleteMapping("/{id}")
   @PreAuthorize("hasRole('ADMIN')")
   public void delete(@PathVariable Long id,
-                     @AuthenticationPrincipal UserDetails principal) {
+      @AuthenticationPrincipal UserDetails principal) {
     service.delete(id, principal.getUsername());
   }
 }

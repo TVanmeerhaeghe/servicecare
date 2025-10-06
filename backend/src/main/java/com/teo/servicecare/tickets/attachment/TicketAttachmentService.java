@@ -36,9 +36,9 @@ public class TicketAttachmentService {
   private final Path baseDir;
 
   public TicketAttachmentService(TicketAttachmentRepository repo,
-                                 TicketRepository ticketRepo,
-                                 UserRepository userRepo,
-                                 UploadsProperties props) throws IOException {
+      TicketRepository ticketRepo,
+      UserRepository userRepo,
+      UploadsProperties props) throws IOException {
     this.repo = repo;
     this.ticketRepo = ticketRepo;
     this.userRepo = userRepo;
@@ -57,8 +57,10 @@ public class TicketAttachmentService {
     var t = ticketRepo.findById(ticketId).orElseThrow();
     enforceVisibility(user, t);
 
-    if (t.getDeletedAt() != null) throw new IllegalArgumentException("ticket_deleted");
-    if (file.isEmpty()) throw new IllegalArgumentException("file_empty");
+    if (t.getDeletedAt() != null)
+      throw new IllegalArgumentException("ticket_deleted");
+    if (file.isEmpty())
+      throw new IllegalArgumentException("file_empty");
 
     long maxBytes = Math.max(0, props.getMaxSizeBytes());
     if (maxBytes > 0 && file.getSize() > maxBytes) {
@@ -77,14 +79,16 @@ public class TicketAttachmentService {
     if (props.getBlockedExtensions() != null && !props.getBlockedExtensions().isEmpty()) {
       boolean blocked = props.getBlockedExtensions().stream()
           .anyMatch(bad -> bad != null && bad.equalsIgnoreCase(extLower));
-      if (blocked) throw new IllegalArgumentException("file_extension_blocked");
+      if (blocked)
+        throw new IllegalArgumentException("file_extension_blocked");
     }
 
     String detectedContentType = safeDetectContentType(file);
     if (props.getAllowedContentTypes() != null && !props.getAllowedContentTypes().isEmpty()) {
       boolean allowed = props.getAllowedContentTypes().stream()
           .anyMatch(ct -> ct != null && ct.equalsIgnoreCase(detectedContentType));
-      if (!allowed) throw new IllegalArgumentException("content_type_not_allowed");
+      if (!allowed)
+        throw new IllegalArgumentException("content_type_not_allowed");
     }
 
     var today = LocalDate.now(APP_ZONE);
@@ -120,8 +124,7 @@ public class TicketAttachmentService {
 
     Specification<TicketAttachment> spec = (r, q, cb) -> cb.and(
         cb.equal(r.get("ticketId"), ticketId),
-        cb.isNull(r.get("deletedAt"))
-    );
+        cb.isNull(r.get("deletedAt")));
     return repo.findAll(spec, pageable).map(AttachmentResponse::from);
   }
 
@@ -131,7 +134,8 @@ public class TicketAttachmentService {
     var t = ticketRepo.findById(a.getTicketId()).orElseThrow();
     enforceVisibility(user, t);
 
-    if (a.getDeletedAt() != null) throw new IllegalArgumentException("attachment_deleted");
+    if (a.getDeletedAt() != null)
+      throw new IllegalArgumentException("attachment_deleted");
     Path p = baseDir.resolve(a.getStoragePath()).normalize();
     ensureChildOfBase(p);
     return p.toFile();
@@ -142,7 +146,8 @@ public class TicketAttachmentService {
     var a = repo.findById(attachmentId).orElseThrow();
     var t = ticketRepo.findById(a.getTicketId()).orElseThrow();
     enforceVisibility(user, t);
-    if (a.getDeletedAt() != null) throw new IllegalArgumentException("attachment_deleted");
+    if (a.getDeletedAt() != null)
+      throw new IllegalArgumentException("attachment_deleted");
     return a;
   }
 
@@ -152,7 +157,8 @@ public class TicketAttachmentService {
     var t = ticketRepo.findById(a.getTicketId()).orElseThrow();
     enforceVisibility(user, t);
 
-    if (a.getDeletedAt() != null) return;
+    if (a.getDeletedAt() != null)
+      return;
     a.setDeletedAt(LocalDateTime.now(APP_ZONE));
     repo.save(a);
 
@@ -160,7 +166,8 @@ public class TicketAttachmentService {
       Path p = baseDir.resolve(a.getStoragePath()).normalize();
       ensureChildOfBase(p);
       Files.deleteIfExists(p);
-    } catch (Exception ignore) {}
+    } catch (Exception ignore) {
+    }
   }
 
   private void ensureChildOfBase(Path p) {
@@ -171,7 +178,8 @@ public class TicketAttachmentService {
 
   private void enforceVisibility(User user, Ticket t) {
     switch (Objects.requireNonNullElse(user.getRole(), User.Role.CLIENT)) {
-      case ADMIN, AGENT, TECHNICIAN -> { /* ok */ }
+      case ADMIN, AGENT, TECHNICIAN -> {
+        /* ok */ }
       case CLIENT -> {
         var userClientId = user.getClient() != null ? user.getClient().getId() : null;
         if (!(userClientId != null && userClientId.equals(t.getClientId()))) {
@@ -185,7 +193,8 @@ public class TicketAttachmentService {
   private String safeDetectContentType(MultipartFile file) {
     try {
       String ct = file.getContentType();
-      if (ct != null && !ct.isBlank()) return ct;
+      if (ct != null && !ct.isBlank())
+        return ct;
 
       try {
         Path tmp = Files.createTempFile("mimecheck_", ".bin");
@@ -194,10 +203,13 @@ public class TicketAttachmentService {
         }
         String probed = Files.probeContentType(tmp);
         Files.deleteIfExists(tmp);
-        if (probed != null && !probed.isBlank()) return probed;
-      } catch (Exception ignore) {}
+        if (probed != null && !probed.isBlank())
+          return probed;
+      } catch (Exception ignore) {
+      }
 
-    } catch (Exception ignore) {}
+    } catch (Exception ignore) {
+    }
     return "application/octet-stream";
   }
 }

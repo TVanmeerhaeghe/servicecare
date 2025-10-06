@@ -24,8 +24,7 @@ public class UserController {
   @GetMapping
   @PreAuthorize("hasRole('ADMIN')")
   public PageResponse<UserResponse> all(
-      @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.DESC) Pageable pageable
-  ) {
+      @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
     var page = service.list(pageable).map(UserResponse::from);
     return PageResponse.from(page);
   }
@@ -67,8 +66,7 @@ public class UserController {
       @RequestParam(required = false) User.Role role,
       @RequestParam(required = false) User.Status status,
       @RequestParam(required = false) Long clientId,
-      @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.DESC) Pageable pageable
-  ) {
+      @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
     var page = service.search(q, role, status, clientId, pageable).map(UserResponse::from);
     return PageResponse.from(page);
   }
@@ -82,14 +80,14 @@ public class UserController {
   @PutMapping("/self")
   @PreAuthorize("isAuthenticated()")
   public UserResponse updateSelf(@AuthenticationPrincipal UserDetails principal,
-                                 @RequestBody UserSelfUpdateRequest in) {
+      @RequestBody UserSelfUpdateRequest in) {
     return UserResponse.from(service.updateSelf(principal.getUsername(), in));
   }
 
   @PostMapping("/self/change-password")
   @PreAuthorize("isAuthenticated()")
   public void changePassword(@AuthenticationPrincipal UserDetails principal,
-                             @RequestBody @Valid ChangePasswordRequest in) {
+      @RequestBody @Valid ChangePasswordRequest in) {
     service.changePassword(principal.getUsername(), in);
   }
 
@@ -97,8 +95,7 @@ public class UserController {
   @PreAuthorize("hasAnyRole('ADMIN','AGENT','TECHNICIAN')")
   public PageResponse<AssigneeResponse> assignees(
       @RequestParam(required = false) String q,
-      @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.ASC) Pageable pageable
-  ) {
+      @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.ASC) Pageable pageable) {
     var page = service.assignees(q, pageable);
     return PageResponse.from(page);
   }

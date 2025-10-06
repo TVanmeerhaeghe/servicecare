@@ -2,7 +2,7 @@ package com.teo.servicecare.clients;
 
 import com.teo.servicecare.clients.Client.ClientStatus;
 import com.teo.servicecare.clients.dto.ClientCreateRequest;
-import com.teo.servicecare.clients.dto.ClientUpdateRequest; 
+import com.teo.servicecare.clients.dto.ClientUpdateRequest;
 import com.teo.servicecare.users.User;
 import com.teo.servicecare.users.UserRepository;
 import jakarta.validation.Valid;
@@ -35,7 +35,8 @@ public class ClientService {
     var client = repo.findById(id).orElseThrow();
     var current = userRepo.findByEmail(email).orElseThrow();
 
-    if (current.getRole() == User.Role.ADMIN) return client;
+    if (current.getRole() == User.Role.ADMIN)
+      return client;
 
     if (current.getClient() != null && client.getId().equals(current.getClient().getId())) {
       return client;
@@ -58,9 +59,7 @@ public class ClientService {
       spec = spec.and(ClientSpecifications.nameLike(q));
     }
 
-    return repo.findAll(spec, pageable).map(c ->
-        Map.of("id", c.getId(), "name", c.getName())
-    );
+    return repo.findAll(spec, pageable).map(c -> Map.of("id", c.getId(), "name", c.getName()));
   }
 
   public Page<Client> search(
@@ -68,12 +67,13 @@ public class ClientService {
       String q,
       String createdFrom,
       String createdTo,
-      Pageable pageable
-  ) {
+      Pageable pageable) {
     Specification<Client> spec = ClientSpecifications.truePredicate();
 
-    if (status != null) spec = spec.and(ClientSpecifications.statusEquals(status));
-    if (q != null && !q.isBlank()) spec = spec.and(ClientSpecifications.fullText(q));
+    if (status != null)
+      spec = spec.and(ClientSpecifications.statusEquals(status));
+    if (q != null && !q.isBlank())
+      spec = spec.and(ClientSpecifications.fullText(q));
 
     ZoneId tz = ZoneId.of("Europe/Paris");
     if (createdFrom != null && !createdFrom.isBlank()) {
@@ -114,7 +114,8 @@ public class ClientService {
 
   @Transactional
   public void delete(Long id) {
-    if (!repo.existsById(id)) throw new IllegalArgumentException("client_not_found");
+    if (!repo.existsById(id))
+      throw new IllegalArgumentException("client_not_found");
     repo.deleteById(id);
   }
 
@@ -139,22 +140,39 @@ public class ClientService {
   }
 
   private void copyUpdate(ClientUpdateRequest in, Client c) {
-    if (in.getName() != null) c.setName(in.getName());
-    if (in.getLegalName() != null) c.setLegalName(in.getLegalName());
-    if (in.getSiret() != null) c.setSiret(in.getSiret());
-    if (in.getVatNumber() != null) c.setVatNumber(in.getVatNumber());
-    if (in.getContactFirstName() != null) c.setContactFirstName(in.getContactFirstName());
-    if (in.getContactLastName() != null) c.setContactLastName(in.getContactLastName());
-    if (in.getContactEmail() != null) c.setContactEmail(in.getContactEmail());
-    if (in.getContactPhone() != null) c.setContactPhone(in.getContactPhone());
-    if (in.getBillingEmail() != null) c.setBillingEmail(in.getBillingEmail());
-    if (in.getTechnicalEmail() != null) c.setTechnicalEmail(in.getTechnicalEmail());
-    if (in.getWebsiteUrl() != null) c.setWebsiteUrl(in.getWebsiteUrl());
-    if (in.getAddressLine1() != null) c.setAddressLine1(in.getAddressLine1());
-    if (in.getPostalCode() != null) c.setPostalCode(in.getPostalCode());
-    if (in.getCity() != null) c.setCity(in.getCity());
-    if (in.getCountryCode() != null) c.setCountryCode(in.getCountryCode());
-    if (in.getCurrencyCode() != null) c.setCurrencyCode(in.getCurrencyCode());
-    if (in.getStatus() != null) c.setStatus(in.getStatus());
+    if (in.getName() != null)
+      c.setName(in.getName());
+    if (in.getLegalName() != null)
+      c.setLegalName(in.getLegalName());
+    if (in.getSiret() != null)
+      c.setSiret(in.getSiret());
+    if (in.getVatNumber() != null)
+      c.setVatNumber(in.getVatNumber());
+    if (in.getContactFirstName() != null)
+      c.setContactFirstName(in.getContactFirstName());
+    if (in.getContactLastName() != null)
+      c.setContactLastName(in.getContactLastName());
+    if (in.getContactEmail() != null)
+      c.setContactEmail(in.getContactEmail());
+    if (in.getContactPhone() != null)
+      c.setContactPhone(in.getContactPhone());
+    if (in.getBillingEmail() != null)
+      c.setBillingEmail(in.getBillingEmail());
+    if (in.getTechnicalEmail() != null)
+      c.setTechnicalEmail(in.getTechnicalEmail());
+    if (in.getWebsiteUrl() != null)
+      c.setWebsiteUrl(in.getWebsiteUrl());
+    if (in.getAddressLine1() != null)
+      c.setAddressLine1(in.getAddressLine1());
+    if (in.getPostalCode() != null)
+      c.setPostalCode(in.getPostalCode());
+    if (in.getCity() != null)
+      c.setCity(in.getCity());
+    if (in.getCountryCode() != null)
+      c.setCountryCode(in.getCountryCode());
+    if (in.getCurrencyCode() != null)
+      c.setCurrencyCode(in.getCurrencyCode());
+    if (in.getStatus() != null)
+      c.setStatus(in.getStatus());
   }
 }

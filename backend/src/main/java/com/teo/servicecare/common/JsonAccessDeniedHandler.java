@@ -16,14 +16,14 @@ public class JsonAccessDeniedHandler implements AccessDeniedHandler {
   private final ObjectMapper mapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
   @Override
-  public void handle(HttpServletRequest request, HttpServletResponse response, AccessDeniedException ex) throws IOException {
+  public void handle(HttpServletRequest request, HttpServletResponse response, AccessDeniedException ex)
+      throws IOException {
     var body = new ErrorResponse.Body(
         "FORBIDDEN",
         "You do not have permission to access this resource",
         Map.of("reason", ex.getMessage()),
         request.getRequestURI(),
-        request.getMethod()
-    );
+        request.getMethod());
     var payload = new ErrorResponse(body);
 
     response.setStatus(HttpServletResponse.SC_FORBIDDEN);

@@ -24,8 +24,7 @@ public class TicketController {
   @PreAuthorize("isAuthenticated()")
   public PageResponse<TicketResponse> all(
       @AuthenticationPrincipal UserDetails principal,
-      @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.DESC) Pageable pageable
-  ) {
+      @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
     var page = service.listVisible(principal.getUsername(), pageable).map(TicketResponse::from);
     return PageResponse.from(page);
   }
@@ -39,15 +38,15 @@ public class TicketController {
   @PostMapping
   @PreAuthorize("hasAnyRole('ADMIN','AGENT','CLIENT')")
   public TicketResponse create(@RequestBody @jakarta.validation.Valid TicketCreateRequest in,
-                               @AuthenticationPrincipal UserDetails principal) {
+      @AuthenticationPrincipal UserDetails principal) {
     return TicketResponse.from(service.create(principal.getUsername(), in));
   }
 
   @PutMapping("/{id}")
   @PreAuthorize("hasAnyRole('ADMIN','AGENT','CLIENT')")
   public TicketResponse update(@PathVariable Long id,
-                               @RequestBody TicketUpdateRequest in,
-                               @AuthenticationPrincipal UserDetails principal) {
+      @RequestBody TicketUpdateRequest in,
+      @AuthenticationPrincipal UserDetails principal) {
     return TicketResponse.from(service.update(principal.getUsername(), id, in));
   }
 
@@ -87,15 +86,13 @@ public class TicketController {
       @RequestParam(required = false) String respondByBefore,
       @RequestParam(required = false) String resolveByBefore,
       @AuthenticationPrincipal org.springframework.security.core.userdetails.User principal,
-      @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.DESC) Pageable pageable
-  ) {
+      @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
     var page = service.search(
         principal.getUsername(),
         clientId, siteId, contractId, assigneeUserId,
         status, priority, slaBreached,
         q, createdFrom, createdTo, updatedFrom, updatedTo, respondByBefore, resolveByBefore,
-        pageable
-    ).map(TicketResponse::from);
+        pageable).map(TicketResponse::from);
     return PageResponse.from(page);
   }
 }

@@ -10,7 +10,8 @@ public class ApiResponse<T> {
   private T data;
   private ApiError error;
 
-  public ApiResponse() {}
+  public ApiResponse() {
+  }
 
   private ApiResponse(boolean success, T data, ApiError error) {
     this.success = success;
@@ -26,14 +27,29 @@ public class ApiResponse<T> {
     return new ApiResponse<>(false, null, new ApiError(message, code, details));
   }
 
-  public boolean isSuccess() { return success; }
-  public void setSuccess(boolean success) { this.success = success; }
+  public boolean isSuccess() {
+    return success;
+  }
 
-  public T getData() { return data; }
-  public void setData(T data) { this.data = data; }
+  public void setSuccess(boolean success) {
+    this.success = success;
+  }
 
-  public ApiError getError() { return error; }
-  public void setError(ApiError error) { this.error = error; }
+  public T getData() {
+    return data;
+  }
+
+  public void setData(T data) {
+    this.data = data;
+  }
+
+  public ApiError getError() {
+    return error;
+  }
+
+  public void setError(ApiError error) {
+    this.error = error;
+  }
 
   @JsonInclude(JsonInclude.Include.NON_NULL)
   public static class ApiError {
@@ -41,7 +57,8 @@ public class ApiResponse<T> {
     private String code;
     private Map<String, Object> details;
 
-    public ApiError() {}
+    public ApiError() {
+    }
 
     public ApiError(String message, String code, Map<String, Object> details) {
       this.message = message;
@@ -49,13 +66,28 @@ public class ApiResponse<T> {
       this.details = details;
     }
 
-    public String getMessage() { return message; }
-    public void setMessage(String message) { this.message = message; }
+    public String getMessage() {
+      return message;
+    }
 
-    public String getCode() { return code; }
-    public void setCode(String code) { this.code = code; }
+    public void setMessage(String message) {
+      this.message = message;
+    }
 
-    public Map<String, Object> getDetails() { return details; }
-    public void setDetails(Map<String, Object> details) { this.details = details; }
+    public String getCode() {
+      return code;
+    }
+
+    public void setCode(String code) {
+      this.code = code;
+    }
+
+    public Map<String, Object> getDetails() {
+      return details;
+    }
+
+    public void setDetails(Map<String, Object> details) {
+      this.details = details;
+    }
   }
 }

@@ -10,7 +10,9 @@ import java.util.Date;
 public class JwtService {
   private final JwtProperties props;
 
-  public JwtService(JwtProperties props) { this.props = props; }
+  public JwtService(JwtProperties props) {
+    this.props = props;
+  }
 
   public String generateToken(String email) {
     Date now = new Date();

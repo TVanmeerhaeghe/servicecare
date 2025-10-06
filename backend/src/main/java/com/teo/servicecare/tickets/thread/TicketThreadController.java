@@ -21,7 +21,7 @@ public class TicketThreadController {
   @GetMapping("/{ticketId}/thread")
   @PreAuthorize("isAuthenticated()")
   public List<ThreadEventResponse> timeline(@PathVariable Long ticketId,
-                                            @AuthenticationPrincipal UserDetails principal) {
+      @AuthenticationPrincipal UserDetails principal) {
     return service.getTimeline(principal.getUsername(), ticketId);
   }
 }

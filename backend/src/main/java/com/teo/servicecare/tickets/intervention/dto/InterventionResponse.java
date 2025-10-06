@@ -42,20 +42,67 @@ public class InterventionResponse {
     return r;
   }
 
-  public Long getId() { return id; }
-  public Long getTicketId() { return ticketId; }
-  public Intervention.Type getType() { return type; }
-  public Intervention.Status getStatus() { return status; }
-  public Long getTechnicianUserId() { return technicianUserId; }
-  public LocalDateTime getScheduledStart() { return scheduledStart; }
-  public LocalDateTime getScheduledEnd() { return scheduledEnd; }
-  public LocalDateTime getActualStart() { return actualStart; }
-  public LocalDateTime getActualEnd() { return actualEnd; }
-  public String getTitle() { return title; }
-  public String getNotes() { return notes; }
-  public String getReport() { return report; }
-  public Integer getTravelMinutes() { return travelMinutes; }
-  public Integer getWorkMinutes() { return workMinutes; }
-  public LocalDateTime getCreatedAt() { return createdAt; }
-  public LocalDateTime getUpdatedAt() { return updatedAt; }
+  public Long getId() {
+    return id;
+  }
+
+  public Long getTicketId() {
+    return ticketId;
+  }
+
+  public Intervention.Type getType() {
+    return type;
+  }
+
+  public Intervention.Status getStatus() {
+    return status;
+  }
+
+  public Long getTechnicianUserId() {
+    return technicianUserId;
+  }
+
+  public LocalDateTime getScheduledStart() {
+    return scheduledStart;
+  }
+
+  public LocalDateTime getScheduledEnd() {
+    return scheduledEnd;
+  }
+
+  public LocalDateTime getActualStart() {
+    return actualStart;
+  }
+
+  public LocalDateTime getActualEnd() {
+    return actualEnd;
+  }
+
+  public String getTitle() {
+    return title;
+  }
+
+  public String getNotes() {
+    return notes;
+  }
+
+  public String getReport() {
+    return report;
+  }
+
+  public Integer getTravelMinutes() {
+    return travelMinutes;
+  }
+
+  public Integer getWorkMinutes() {
+    return workMinutes;
+  }
+
+  public LocalDateTime getCreatedAt() {
+    return createdAt;
+  }
+
+  public LocalDateTime getUpdatedAt() {
+    return updatedAt;
+  }
 }

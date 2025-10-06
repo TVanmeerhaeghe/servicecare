@@ -28,13 +28,39 @@ public class TicketWorkLogResponse {
     return r;
   }
 
-  public Long getId() { return id; }
-  public Long getTicketId() { return ticketId; }
-  public Long getUserId() { return userId; }
-  public LocalDateTime getStartedAt() { return startedAt; }
-  public LocalDateTime getEndedAt() { return endedAt; }
-  public Integer getMinutes() { return minutes; }
-  public String getNote() { return note; }
-  public LocalDateTime getCreatedAt() { return createdAt; }
-  public LocalDateTime getUpdatedAt() { return updatedAt; }
+  public Long getId() {
+    return id;
+  }
+
+  public Long getTicketId() {
+    return ticketId;
+  }
+
+  public Long getUserId() {
+    return userId;
+  }
+
+  public LocalDateTime getStartedAt() {
+    return startedAt;
+  }
+
+  public LocalDateTime getEndedAt() {
+    return endedAt;
+  }
+
+  public Integer getMinutes() {
+    return minutes;
+  }
+
+  public String getNote() {
+    return note;
+  }
+
+  public LocalDateTime getCreatedAt() {
+    return createdAt;
+  }
+
+  public LocalDateTime getUpdatedAt() {
+    return updatedAt;
+  }
 }
