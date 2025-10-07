@@ -54,15 +54,6 @@
               <textarea v-model="form.description" class="input" rows="4"></textarea>
             </label>
             <label class="field">
-              <span>Priorité</span>
-              <select v-model="form.priority" class="input">
-                <option value="CRITICAL">Critique</option>
-                <option value="HIGH">Haute</option>
-                <option value="MEDIUM">Moyenne</option>
-                <option value="LOW">Basse</option>
-              </select>
-            </label>
-            <label class="field">
               <span>Statut</span>
               <select v-model="form.status" class="input">
                 <option value="OPEN">Ouvert</option>
@@ -74,7 +65,16 @@
               </select>
             </label>
             <label class="field">
-              <span>ID assigné</span>
+              <span>Priorité</span>
+              <select v-model="form.priority" class="input">
+                <option value="CRITICAL">Critique</option>
+                <option value="HIGH">Haute</option>
+                <option value="MEDIUM">Moyenne</option>
+                <option value="LOW">Basse</option>
+              </select>
+            </label>
+            <label class="field">
+              <span>Assigné à (ID)</span>
               <input v-model.number="form.assigneeUserId" type="number" min="1" class="input" />
             </label>
             <label class="field">

@@ -44,3 +44,25 @@ export interface TicketPayload {
   status?: TicketStatus | null;
   waitingReason?: string | null;
 }
+
+export type TicketThreadKind = "COMMENT" | "INTERVENTION" | "ATTACHMENT";
+
+export interface TicketThreadEvent {
+  id: number;
+  kind: TicketThreadKind;
+  at: string | null;
+  authorName?: string | null;
+  body?: string | null;
+  interventionType?: string | null;
+  interventionStatus?: string | null;
+  title?: string | null;
+  technicianUserId?: number | null;
+  scheduledStart?: string | null;
+  scheduledEnd?: string | null;
+  actualStart?: string | null;
+  actualEnd?: string | null;
+  originalName?: string | null;
+  contentType?: string | null;
+  size?: number | null;
+  downloadUrl?: string | null;
+}

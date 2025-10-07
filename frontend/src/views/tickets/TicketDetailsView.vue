@@ -65,6 +65,39 @@
           </dl>
         </div>
       </article>
+
+      <article class="data-card">
+        <div class="p-5">
+          <h2 class="section-kicker">Historique</h2>
+          <ul class="timeline">
+            <li v-for="event in thread" :key="`${event.kind}-${event.id}`">
+              <div class="timeline__meta">{{ eventDate(event) }}</div>
+              <div class="timeline__title">{{ eventTitle(event) }}</div>
+              <div class="timeline__body" v-if="eventDetails(event)">{{ eventDetails(event) }}</div>
+              <a
+                v-if="event.kind === 'ATTACHMENT' && event.downloadUrl"
+                :href="event.downloadUrl"
+                class="timeline__link"
+                target="_blank"
+                rel="noopener"
+              >
+                Télécharger
+              </a>
+            </li>
+            <li v-if="!thread.length" class="timeline__empty">Aucun événement pour ce ticket.</li>
+          </ul>
+        </div>
+      </article>
+
+      <article class="data-card">
+        <div class="p-5">
+          <TicketCommentsSection
+            v-if="ticket"
+            :ticket-id="ticket.id"
+            @comment-posted="reloadThread"
+          />
+        </div>
+      </article>
     </section>
   </div>
 </template>
@@ -74,13 +107,17 @@ import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { fetchTicketDetails } from '@/api/tickets'
 import { fetchClientDetails } from '@/api/clients'
+import TicketCommentsSection from '@/components/tickets/TicketCommentsSection.vue'
+import { fetchTicketThread } from '@/api/tickets'
 import type { Ticket } from '@/types/tickets'
 import type { Client } from '@/types/clients'
+import type { TicketThreadEvent } from '@/types/tickets'
 
 const route = useRoute()
 const router = useRouter()
 const ticket = ref<Ticket | null>(null)
 const client = ref<Client | null>(null)
+const thread = ref<TicketThreadEvent[]>([])
 
 const formatter = new Intl.DateTimeFormat('fr-FR', {
   dateStyle: 'short',
@@ -94,6 +131,14 @@ async function load() {
     const clientRes = await fetchClientDetails(data.clientId)
     client.value = clientRes.data
   }
+  await loadThread()
+}
+async function loadThread() {
+  const threadRes = await fetchTicketThread(route.params.id as string)
+  thread.value = threadRes.data
+}
+function reloadThread() {
+  loadThread()
 }
 
 function goBack() {
@@ -159,6 +204,28 @@ function formatDuration(seconds: number) {
   const hours = Math.floor(seconds / 3600)
   const mins = Math.floor((seconds % 3600) / 60)
   return `${hours}h${mins.toString().padStart(2, '0')}`
+}
+
+function eventDate(e: TicketThreadEvent) {
+  return e.at ? formatter.format(new Date(e.at)) : '—'
+}
+
+function eventTitle(e: TicketThreadEvent) {
+  if (e.kind === 'COMMENT') return e.authorName || 'Commentaire'
+  if (e.kind === 'INTERVENTION') return e.title || 'Intervention'
+  return e.originalName || 'Fichier'
+}
+
+function eventDetails(e: TicketThreadEvent) {
+  if (e.kind === 'COMMENT') return e.body || ''
+  if (e.kind === 'INTERVENTION') {
+    return [
+      e.interventionType,
+      e.interventionStatus,
+      e.technicianUserId ? `Technicien #${e.technicianUserId}` : null,
+    ].filter(Boolean).join(' • ')
+  }
+  return `${e.size ?? 0} octets`
 }
 
 onMounted(load)

@@ -1,5 +1,10 @@
 import api from "./http";
-import type { Ticket, TicketPage, TicketPayload } from "@/types/tickets";
+import type {
+  Ticket,
+  TicketPage,
+  TicketPayload,
+  TicketThreadEvent,
+} from "@/types/tickets";
 
 export const fetchTickets = (params: {
   page: number;
@@ -55,3 +60,6 @@ export const restoreTicket = (id: number | string) =>
 
 export const transitionTicket = (id: number | string, action: string) =>
   api.post(`/tickets/${id}/transition`, null, { params: { action } });
+
+export const fetchTicketThread = (ticketId: number | string) =>
+  api.get<TicketThreadEvent[]>(`/tickets/${ticketId}/thread`);
