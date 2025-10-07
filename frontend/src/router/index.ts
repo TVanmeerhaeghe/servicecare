@@ -80,7 +80,7 @@ const routes: RouteRecordRaw[] = [
         path: "create",
         name: "site-create",
         component: SiteFormView,
-        meta: { title: "Nouveau site" },
+        meta: { title: "Nouveau site", adminOnly: true },
       },
       {
         path: ":id",
@@ -94,7 +94,7 @@ const routes: RouteRecordRaw[] = [
         name: "site-edit",
         component: SiteFormView,
         props: true,
-        meta: { title: "Modifier site" },
+        meta: { title: "Modifier site", adminOnly: true },
       },
     ],
   },
@@ -139,18 +139,14 @@ const router = createRouter({
   routes,
 });
 
-router.beforeEach((to) => {
+router.beforeEach((to, _from, next) => {
   const auth = useAuthStore();
   if (!auth.hydrated) auth.hydrateFromStorage();
 
-  if (to.meta.public) return true;
-  if (to.meta.requiresAuth && !auth.isAuthenticated) {
-    return { name: "login", query: { redirect: to.fullPath } };
+  if (auth.isClientRole && to.meta?.adminOnly) {
+    return next({ name: "sites-list" });
   }
-  if (to.name === "login" && auth.isAuthenticated) {
-    return { name: "dashboard" };
-  }
-  return true;
+  next();
 });
 
 export default router;

@@ -5,7 +5,11 @@
         <p class="text-sm text-muted">Gestion des environnements clients.</p>
       </div>
       <div class="filters-controls">
-        <button class="btn btn-primary text-sm" @click="goToCreate">
+        <button
+          v-if="!auth.isClientRole"
+          class="btn btn-primary text-sm"
+          @click="goToCreate"
+        >
           Ajouter un site
         </button>
       </div>
@@ -103,9 +107,20 @@
             </td>
             <td class="data-table__actions">
               <div class="btn-group">
-                <button class="btn btn-ghost text-sm" @click="goToEdit(site.id)">Modifier</button>
-                <button class="btn btn-ghost text-sm" @click="goToDetails(site.id)">Détails</button>
-                <button class="btn btn-ghost text-sm text-danger" @click="askDelete(site)">Supprimer</button>
+                <button
+                  v-if="!auth.isClientRole"
+                  class="btn btn-ghost text-sm"
+                  @click="goToEdit(site.id)"
+                >Modifier</button>
+                <button
+                  class="btn btn-ghost text-sm"
+                  @click="goToDetails(site.id)"
+                >Détails</button>
+                <button
+                  v-if="!auth.isClientRole"
+                  class="btn btn-ghost text-sm text-danger"
+                  @click="askDelete(site)"
+                >Supprimer</button>
               </div>
             </td>
           </tr>
@@ -150,8 +165,10 @@ import { useRouter } from 'vue-router'
 import { fetchSites, deleteSite } from '@/api/sites'
 import type { Site } from '@/types/sites'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
+import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
+const auth = useAuthStore()
 const sites = ref<Site[]>([])
 const loading = ref(false)
 const confirmVisible = ref(false)
@@ -187,6 +204,7 @@ async function load() {
       search: filters.query || undefined,
       status: filters.status || undefined,
       cms: filters.cms || undefined,
+      clientId: auth.isClientRole ? (auth.clientId ?? undefined) : undefined,
     })
     sites.value = data.content
     pagination.total = data.totalElements

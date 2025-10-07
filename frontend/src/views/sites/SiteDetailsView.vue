@@ -3,11 +3,15 @@
     <header class="page-header">
       <div>
         <h1 class="text-lg">{{ site?.name || 'Site' }}</h1>
-        <p class="text-sm text-muted">{{ site?.url || '—' }}</p>
+        <p class="text-sm text-muted">{{ site?.url }}</p>
       </div>
       <div class="filters-controls">
         <button class="btn btn-ghost text-sm" @click="goBack">Retour</button>
-        <button class="btn btn-primary text-sm" @click="goEdit">Modifier</button>
+        <button
+          v-if="!auth.isClientRole"
+          class="btn btn-primary text-sm"
+          @click="goEdit"
+        >Modifier</button>
       </div>
     </header>
 
@@ -22,7 +26,15 @@
             <div><dt>Type</dt><dd>{{ site.type || '—' }}</dd></div>
             <div><dt>CMS</dt><dd>{{ site.cms || '—' }}</dd></div>
             <div><dt>Hébergeur</dt><dd>{{ site.hostingProvider || '—' }}</dd></div>
-            <div><dt>Client ID</dt><dd>{{ site.clientId || '—' }}</dd></div>
+            <div>
+              <dt>Client</dt>
+              <dd>
+                <span v-if="client">{{ client.name || ('Client #' + client.id) }}</span>
+                <span v-else>
+                  {{ site.clientId ? ('Client #' + site.clientId) : '—' }}
+                </span>
+              </dd>
+            </div>
           </dl>
         </div>
       </article>
@@ -77,21 +89,6 @@
           </dl>
         </div>
       </article>
-
-      <article v-if="client" class="data-card">
-        <div class="p-5">
-          <h2 class="section-kicker">Client associé</h2>
-          <dl class="info-grid">
-            <div><dt>Nom</dt><dd>{{ client.name || '—' }}</dd></div>
-            <div><dt>Statut</dt><dd>{{ client.status || '—' }}</dd></div>
-            <div><dt>Email</dt><dd>{{ client.contactEmail || '—' }}</dd></div>
-            <div><dt>Téléphone</dt><dd>{{ client.contactPhone || '—' }}</dd></div>
-          </dl>
-          <button class="btn btn-primary text-sm mt-4" @click="goToClientDetails">
-            Voir le client
-          </button>
-        </div>
-      </article>
     </section>
   </div>
 </template>
@@ -101,11 +98,13 @@ import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { fetchSiteDetails } from '@/api/sites'
 import { fetchClientDetails } from '@/api/clients'
+import { useAuthStore } from '@/stores/auth'
 import type { Site } from '@/types/sites'
 import type { Client } from '@/types/clients'
 
 const route = useRoute()
 const router = useRouter()
+const auth = useAuthStore()
 const site = ref<Site | null>(null)
 const client = ref<Client | null>(null)
 
@@ -137,7 +136,9 @@ function goBack() {
 }
 
 function goEdit() {
-  router.push({ name: 'site-edit', params: { id: route.params.id } })
+  if (!site.value) return
+  if (auth.isClientRole) return
+  router.push({ name: 'site-edit', params: { id: site.value.id } })
 }
 
 function goToClientDetails() {

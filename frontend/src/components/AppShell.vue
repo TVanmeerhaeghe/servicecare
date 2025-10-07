@@ -7,9 +7,8 @@
             <div class="w-11 h-11 flex items-center justify-center rounded-lg bg-primary text-primary-contrast font-semibold shadow-layer-1">
               SC
             </div>
-            <span class="font-semibold tracking-wide"><a href="/dashboard">ServiceCare</a></span>
+            <span class="font-semibold tracking-wide">ServiceCare</span>
           </div>
-
         </RouterLink>
       </div>
 
@@ -32,7 +31,11 @@
         <div v-if="auth.isAuthenticated" class="text-xs text-muted truncate">
           {{ auth.displayName || 'Utilisateur' }}
         </div>
-        <button v-if="auth.isAuthenticated" @click="onLogout" class="btn btn-ghost flex-1 text-xs">
+        <button
+          v-if="auth.isAuthenticated"
+          @click="onLogout"
+          class="btn btn-ghost flex-1 text-xs"
+        >
           Déconnexion
         </button>
       </div>
@@ -62,19 +65,23 @@ const auth = useAuthStore()
 const route = useRoute()
 const router = useRouter()
 
-const nav = [
-  { to: '/tickets', label: 'Tickets', icon: 'TK' },
-  { to: '/clients', label: 'Clients', icon: 'CL' },
-  { to: '/sites', label: 'Sites', icon: 'ST' },
+const rawNav = [
+  { to: '/tickets', label: 'Tickets', icon: 'TK', admin: false },
+  { to: '/clients', label: 'Clients', icon: 'CL', admin: true },
+  { to: '/sites', label: 'Sites', icon: 'ST', admin: false },
 ]
 
+const nav = computed(() =>
+  rawNav.filter(i => !i.admin || auth.canSeeAdminSections)
+)
+
 const pageTitle = computed(() => {
-  const match = [...route.matched].reverse().find((r) => r.meta?.title)
+  const match = [...route.matched].reverse().find(r => r.meta?.title)
   return (match?.meta?.title as string) || 'ServiceCare'
 })
 
 function isActive(path: string) {
-  return route.path === path || route.path.startsWith(`${path}/`)
+  return route.path === path || route.path.startsWith(path + '/')
 }
 
 function onLogout() {
