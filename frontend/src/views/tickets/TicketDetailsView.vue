@@ -72,6 +72,7 @@
         </div>
       </article>
 
+      <!-- Historique / Réponses -->
       <article class="data-card">
         <div class="p-5">
           <h2 class="section-kicker">Historique</h2>
@@ -119,10 +120,9 @@
         </div>
       </article>
 
-      <article class="data-card">
+      <article class="data-card" v-if="ticket">
         <div class="p-5">
           <TicketCommentsSection
-            v-if="ticket"
             :ticket-id="ticket.id"
             @comment-posted="reloadThread"
           />
