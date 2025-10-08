@@ -75,6 +75,7 @@ public class TicketCommentService {
     c.setAuthorName(display.trim().isEmpty() ? current.getEmail() : display.trim());
     c.setBody(in.getBody());
     c.setInternalOnly(internal);
+    c.setAuthorIsClient(current.getRole() == User.Role.CLIENT);
     c.setDeletedAt(null);
 
     return TicketCommentResponse.from(repo.save(c));

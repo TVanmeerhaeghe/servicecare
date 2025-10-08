@@ -49,22 +49,46 @@ export interface TicketPayload {
 
 export type TicketThreadKind = "COMMENT" | "INTERVENTION" | "ATTACHMENT";
 
-export interface TicketThreadEvent {
+export interface CommentEvent {
+  kind: "COMMENT";
   id: number;
-  kind: TicketThreadKind;
   at: string | null;
   authorName?: string | null;
-  body?: string | null;
+  authorUserId?: number | null;
+  body: string;
+  internalOnly?: boolean;
+  authorIsClient?: boolean;
+}
+
+export interface AttachmentEvent {
+  kind: "ATTACHMENT";
+  id: number;
+  at: string | null;
+  authorName?: string | null;
+  authorUserId?: number | null;
+  originalName: string;
+  size?: number | null;
+  downloadUrl?: string | null;
+  contentType?: string | null;
+}
+
+export interface InterventionEvent {
+  kind: "INTERVENTION";
+  id: number;
+  at: string | null;
+  authorName?: string | null;
+  authorUserId?: number | null;
+  title?: string | null;
   interventionType?: string | null;
   interventionStatus?: string | null;
-  title?: string | null;
   technicianUserId?: number | null;
   scheduledStart?: string | null;
   scheduledEnd?: string | null;
   actualStart?: string | null;
   actualEnd?: string | null;
-  originalName?: string | null;
-  contentType?: string | null;
-  size?: number | null;
-  downloadUrl?: string | null;
 }
+
+export type TicketThreadEvent =
+  | CommentEvent
+  | AttachmentEvent
+  | InterventionEvent;

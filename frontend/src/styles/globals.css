@@ -21,6 +21,22 @@
   --color-info: #3b82f6;
   --color-success: #16a34a;
   --color-focus: #7b7ef7;
+  --color-thread-client-bg: color-mix(
+    in srgb,
+    var(--color-primary) 9%,
+    var(--color-surface)
+  );
+  --color-thread-client-border: color-mix(
+    in srgb,
+    var(--color-primary) 35%,
+    var(--color-border)
+  );
+  --color-thread-staff-bg: color-mix(
+    in srgb,
+    var(--color-surface-alt) 80%,
+    var(--color-surface)
+  );
+  --color-thread-staff-border: var(--color-border);
 
   /* Shadows */
   --shadow-1: 0 2px 8px rgba(2, 6, 23, 0.45);
@@ -1013,4 +1029,110 @@ dd {
   padding: 0.4rem 0.75rem;
   font-size: 0.75rem;
   border-radius: var(--radius-sm);
+}
+
+.timeline__item--comment {
+  border-left: none;
+  padding-left: 0;
+  margin-left: 0;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.timeline__item--comment + .timeline__item--comment {
+  margin-top: 4px;
+}
+
+/* Client (à droite) */
+.timeline__item--client {
+  align-items: flex-end;
+}
+
+.chat-bubble--client {
+  margin-left: auto;
+  background: var(--color-primary);
+  color: var(--color-primary-contrast);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 80%, #0000);
+  border-top-right-radius: 6px;
+}
+
+/* Staff (à gauche) */
+.timeline__item--staff {
+  align-items: flex-start;
+}
+
+/* Reduce spacing when mixing comment + non-comment events */
+.timeline__item:not(.timeline__item--comment) {
+  margin-top: 18px;
+}
+
+.timeline__item--comment {
+  margin: 16px 0;
+  padding: 0;
+  border: none;
+}
+
+.thread-comment {
+  padding: 10px 14px 12px;
+  border-radius: 10px;
+  background: var(--color-thread-staff-bg);
+  border: 1px solid var(--color-thread-staff-border);
+  max-width: 100%;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  position: relative;
+  word-break: break-word;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.thread-comment--client {
+  background: var(--color-thread-client-bg);
+  border-color: var(--color-thread-client-border);
+}
+
+.thread-comment--staff {
+  background: var(--color-thread-staff-bg);
+  border-color: var(--color-thread-staff-border);
+}
+
+.thread-comment--internal {
+  outline: 2px dashed var(--color-warning);
+  outline-offset: 2px;
+}
+
+.thread-comment__meta {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.85;
+  margin-bottom: 4px;
+}
+
+.thread-comment__author {
+  font-weight: 600;
+}
+
+.thread-comment__time {
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
+
+.thread-comment__tag {
+  background: var(--color-warning);
+  color: #111;
+  padding: 2px 6px;
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.thread-comment__body {
+  white-space: pre-line;
+  font-size: 0.9rem;
 }

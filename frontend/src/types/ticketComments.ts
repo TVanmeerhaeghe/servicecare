@@ -1,12 +1,13 @@
 export interface TicketComment {
   id: number;
   ticketId: number;
-  authorId: number | null;
-  authorName?: string | null;
+  authorUserId: number;
+  authorName: string;
   body: string;
-  internalOnly?: boolean;
+  internalOnly: boolean;
+  authorIsClient?: boolean;
   createdAt: string;
-  updatedAt?: string | null;
+  updatedAt: string | null;
 }
 
 export interface TicketCommentPage {

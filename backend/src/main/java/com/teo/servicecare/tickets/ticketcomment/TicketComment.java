@@ -27,6 +27,9 @@ public class TicketComment {
   @Column(nullable = false)
   private boolean internalOnly = false;
 
+  @Column(nullable = false)
+  private boolean authorIsClient = false;
+
   @Column(insertable = false, updatable = false)
   private LocalDateTime createdAt;
 
@@ -77,6 +80,14 @@ public class TicketComment {
 
   public void setInternalOnly(boolean internalOnly) {
     this.internalOnly = internalOnly;
+  }
+
+  public boolean isAuthorIsClient() {
+    return authorIsClient;
+  }
+
+  public void setAuthorIsClient(boolean authorIsClient) {
+    this.authorIsClient = authorIsClient;
   }
 
   public LocalDateTime getCreatedAt() {

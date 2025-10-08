@@ -10,6 +10,7 @@ public class TicketCommentResponse {
   private String authorName;
   private String body;
   private boolean internalOnly;
+  private boolean authorIsClient;
   private LocalDateTime createdAt;
   private LocalDateTime updatedAt;
 
@@ -21,6 +22,7 @@ public class TicketCommentResponse {
     r.authorName = c.getAuthorName();
     r.body = c.getBody();
     r.internalOnly = c.isInternalOnly();
+    r.authorIsClient = c.isAuthorIsClient();
     r.createdAt = c.getCreatedAt();
     r.updatedAt = c.getUpdatedAt();
     return r;
@@ -48,6 +50,10 @@ public class TicketCommentResponse {
 
   public boolean isInternalOnly() {
     return internalOnly;
+  }
+
+  public boolean isAuthorIsClient() {
+    return authorIsClient;
   }
 
   public LocalDateTime getCreatedAt() {
