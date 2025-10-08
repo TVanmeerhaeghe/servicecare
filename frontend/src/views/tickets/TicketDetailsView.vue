@@ -20,35 +20,72 @@
     </header>
 
     <section v-if="ticket" class="detail-grid">
-      <article class="data-card">
-        <div class="p-5">
-          <h2 class="section-kicker">Résumé</h2>
-          <dl class="info-grid">
-            <div><dt>Statut</dt><dd><span class="badge" :class="statusBadge(ticket.status)">{{ statusLabel(ticket.status) }}</span></dd></div>
-            <div><dt>Priorité</dt><dd><span class="badge" :class="priorityBadge(ticket.priority)">{{ priorityLabel(ticket.priority) }}</span></dd></div>
-            <div><dt>Assigné à</dt><dd>{{ ticket.assigneeUserId ? `Utilisateur #${ticket.assigneeUserId}` : '—' }}</dd></div>
-            <div><dt>Raison attente</dt><dd>{{ ticket.waitingReason || '—' }}</dd></div>
-          </dl>
+      <article class="data-card ticket-summary-card">
+        <div class="ticket-summary-grid">
+          <div class="ts-item">
+            <span class="ts-label">Statut</span>
+            <span class="badge" :class="statusBadge(ticket.status)">{{ statusLabel(ticket.status) }}</span>
+          </div>
+          <div class="ts-item">
+            <span class="ts-label">Priorité</span>
+            <span class="badge" :class="priorityBadge(ticket.priority)">{{ priorityLabel(ticket.priority) }}</span>
+          </div>
+          <div class="ts-item">
+            <span class="ts-label">Répondre avant</span>
+            <span class="ts-value">{{ formatDate(ticket.respondBy) }}</span>
+          </div>
+            <div class="ts-item">
+              <span class="ts-label">Résoudre avant</span>
+              <span class="ts-value">{{ formatDate(ticket.resolveBy) }}</span>
+            </div>
+          <div class="ts-item" v-if="!isClientRole">
+            <span class="ts-label">Client</span>
+            <span class="ts-value">{{ client?.name || clientNameFallback }}</span>
+          </div>
+          <div class="ts-item">
+            <span class="ts-label">Site</span>
+            <span class="ts-value">{{ siteDisplay || '—' }}</span>
+          </div>
+        </div>
+        <div class="ticket-summary-actions">
+          <button class="btn btn-ghost btn-sm" @click="toggleDetails">
+            {{ showDetails ? 'Moins de détails' : 'Plus de détails' }}
+          </button>
         </div>
       </article>
 
-      <article class="data-card">
-        <div class="p-5">
-          <h2 class="section-kicker">Échéances</h2>
-          <dl class="info-grid">
-            <div><dt>Répondre avant</dt><dd>{{ formatDate(ticket.respondBy) }}</dd></div>
-            <div><dt>Résoudre avant</dt><dd>{{ formatDate(ticket.resolveBy) }}</dd></div>
-            <div><dt>Répondu le</dt><dd>{{ formatDate(ticket.respondedAt) }}</dd></div>
-            <div><dt>Résolu le</dt><dd>{{ formatDate(ticket.resolvedAt) }}</dd></div>
-            <div><dt>SLA dépassé</dt><dd>{{ ticket.slaBreached ? 'Oui' : 'Non' }}</dd></div>
-            <div><dt>Temps en pause</dt><dd>{{ formatDuration(ticket.pausedSeconds) }}</dd></div>
-          </dl>
-        </div>
-      </article>
+      <template v-if="showDetails">
+        <article class="data-card">
+          <div class="p-5">
+            <h2 class="section-kicker">Résumé détaillé</h2>
+            <dl class="info-grid">
+              <div><dt>Statut</dt><dd><span class="badge" :class="statusBadge(ticket.status)">{{ statusLabel(ticket.status) }}</span></dd></div>
+              <div><dt>Priorité</dt><dd><span class="badge" :class="priorityBadge(ticket.priority)">{{ priorityLabel(ticket.priority) }}</span></dd></div>
+              <div><dt>Assigné à</dt><dd>{{ ticket.assigneeUserId ? `Utilisateur #${ticket.assigneeUserId}` : '—' }}</dd></div>
+              <div><dt>Raison attente</dt><dd>{{ ticket.waitingReason || '—' }}</dd></div>
+              <div><dt>Temps en pause</dt><dd>{{ formatDuration(ticket.pausedSeconds) }}</dd></div>
+              <div><dt>SLA dépassé</dt><dd>{{ ticket.slaBreached ? 'Oui' : 'Non' }}</dd></div>
+            </dl>
+          </div>
+        </article>
 
-      <article v-if="!isClientRole && client" class="data-card">
-        <div class="p-5">
-          <h2 class="section-kicker">Client</h2>
+        <article class="data-card">
+          <div class="p-5">
+            <h2 class="section-kicker">Échéances</h2>
+            <dl class="info-grid">
+              <div><dt>Répondre avant</dt><dd>{{ formatDate(ticket.respondBy) }}</dd></div>
+              <div><dt>Résoudre avant</dt><dd>{{ formatDate(ticket.resolveBy) }}</dd></div>
+              <div><dt>Répondu le</dt><dd>{{ formatDate(ticket.respondedAt) }}</dd></div>
+              <div><dt>Résolu le</dt><dd>{{ formatDate(ticket.resolvedAt) }}</dd></div>
+              <div><dt>Créé le</dt><dd>{{ formatDate(ticket.createdAt || null) }}</dd></div>
+              <div><dt>Màj le</dt><dd>{{ formatDate(ticket.updatedAt || null) }}</dd></div>
+            </dl>
+          </div>
+        </article>
+
+        <article v-if="!isClientRole && client" class="data-card">
+          <div class="p-5">
+            <h2 class="section-kicker">Client</h2>
             <dl class="info-grid">
               <div><dt>Nom</dt><dd>{{ client.name || '—' }}</dd></div>
               <div><dt>Email</dt><dd>{{ client.contactEmail || '—' }}</dd></div>
@@ -58,21 +95,21 @@
             <button class="btn btn-primary text-sm mt-4" @click="goToClientDetails">
               Voir le client
             </button>
-        </div>
-      </article>
+          </div>
+        </article>
 
-      <article v-if="!isClientRole" class="data-card">
-        <div class="p-5">
-          <h2 class="section-kicker">Références</h2>
-          <dl class="info-grid">
-            <div><dt>Client ID</dt><dd>{{ ticket.clientId }}</dd></div>
-            <div><dt>Site ID</dt><dd>{{ ticket.siteId || '—' }}</dd></div>
-            <div><dt>Contrat ID</dt><dd>{{ ticket.contractId || '—' }}</dd></div>
-          </dl>
-        </div>
-      </article>
+        <article v-if="!isClientRole" class="data-card">
+          <div class="p-5">
+            <h2 class="section-kicker">Références</h2>
+            <dl class="info-grid">
+              <div><dt>Client</dt><dd>{{ client?.name || clientNameFallback }}</dd></div>
+              <div><dt>Site</dt><dd>{{ siteDisplay || '—' }}</dd></div>
+              <div><dt>Contrat</dt><dd>{{ ticket.contractId || '—' }}</dd></div>
+            </dl>
+          </div>
+        </article>
+      </template>
 
-      <!-- Historique / Réponses -->
       <article class="data-card">
         <div class="p-5">
           <h2 class="section-kicker">Historique</h2>
@@ -138,9 +175,11 @@ import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { fetchTicketDetails, fetchTicketThread } from '@/api/tickets'
 import { fetchClientDetails } from '@/api/clients'
+import { fetchSiteDetails } from '@/api/sites'
 import TicketCommentsSection from '@/components/tickets/TicketCommentsSection.vue'
 import type { Ticket, TicketThreadEvent } from '@/types/tickets'
 import type { Client } from '@/types/clients'
+import type { Site } from '@/types/sites'
 
 const auth = useAuthStore()
 const isClientRole = computed(() => auth.isClientRole)
@@ -149,12 +188,21 @@ const route = useRoute()
 const router = useRouter()
 const ticket = ref<Ticket | null>(null)
 const client = ref<Client | null>(null)
+const site = ref<Site | null>(null)
 const thread = ref<TicketThreadEvent[]>([])
+const showDetails = ref(false)
+
+const clientNameFallback = computed(() => ticket.value?.clientId ? `Client #${ticket.value.clientId}` : '—')
+const siteDisplay = computed(() => site.value?.url || site.value?.prodUrl || site.value?.url || null)
 
 const formatter = new Intl.DateTimeFormat('fr-FR', {
   dateStyle: 'short',
   timeStyle: 'short',
 })
+
+function toggleDetails() {
+  showDetails.value = !showDetails.value
+}
 
 async function load() {
   const { data } = await fetchTicketDetails(route.params.id as string)
@@ -163,6 +211,12 @@ async function load() {
     const clientRes = await fetchClientDetails(data.clientId)
     client.value = clientRes.data
   }
+  if (data.siteId) {
+    try {
+      const siteRes = await fetchSiteDetails(data.siteId)
+      site.value = siteRes.data
+    } catch {}
+  }
   await loadThread()
 }
 async function loadThread() {
@@ -170,7 +224,7 @@ async function loadThread() {
   thread.value = threadRes.data
 }
 function reloadThread() {
-  loadThread() 
+  loadThread()
 }
 
 function goBack() {
@@ -236,17 +290,11 @@ function formatDuration(seconds: number) {
   if (!seconds) return '—'
   const hours = Math.floor(seconds / 3600)
   const mins = Math.floor((seconds % 3600) / 60)
-  return `${hours}h${mins.toString().padStart(2, '0')}`
+  return `${hours}h${mins.toString().padStart(2,'0')}`
 }
 
 function eventDate(e: TicketThreadEvent) {
   return e.at ? formatter.format(new Date(e.at)) : '—'
-}
-
-function eventTitle(e: TicketThreadEvent) {
-  if (e.kind === 'COMMENT') return e.authorName || 'Commentaire'
-  if (e.kind === 'INTERVENTION') return e.title || 'Intervention'
-  return e.originalName || 'Fichier'
 }
 
 function eventDetails(e: TicketThreadEvent) {
@@ -259,6 +307,13 @@ function eventDetails(e: TicketThreadEvent) {
     ].filter(Boolean).join(' • ')
   }
   return `${e.size ?? 0} octets`
+}
+
+function eventTitle(e: TicketThreadEvent) {
+  if (e.kind === 'COMMENT') return 'Commentaire'
+  if (e.kind === 'INTERVENTION') return 'Intervention'
+  if (e.kind === 'ATTACHMENT') return 'Pièce jointe'
+  return e.kind
 }
 
 onMounted(load)

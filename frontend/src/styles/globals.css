@@ -977,3 +977,40 @@ dd {
     min-width: 0;
   }
 }
+
+.ticket-summary-card {
+  padding: 12px 16px;
+}
+.ticket-summary-grid {
+  display: grid;
+  gap: 12px 24px;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  align-items: start;
+}
+.ts-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 120px;
+}
+.ts-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-text-muted);
+  font-weight: 600;
+}
+.ts-value {
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+.ticket-summary-actions {
+  margin-top: 10px;
+  display: flex;
+  justify-content: flex-end;
+}
+.btn-sm {
+  padding: 0.4rem 0.75rem;
+  font-size: 0.75rem;
+  border-radius: var(--radius-sm);
+}
