@@ -64,7 +64,7 @@
         <thead>
           <tr>
             <th>Titre</th>
-            <th>Client</th>
+            <th v-if="!auth.isClientRole">Client</th>
             <th>Priorité</th>
             <th>Statut</th>
             <th>Échéances</th>
@@ -73,19 +73,18 @@
         </thead>
         <tbody>
           <tr v-if="loading">
-            <td colspan="6" class="text-center text-muted py-6">Chargement…</td>
+            <td :colspan="auth.isClientRole ? 5 : 6" class="text-center text-muted py-6">Chargement…</td>
           </tr>
           <tr v-else-if="!tickets.length">
-            <td colspan="6" class="text-center text-muted py-6">Aucun ticket trouvé.</td>
+            <td :colspan="auth.isClientRole ? 5 : 6" class="text-center text-muted py-6">Aucun ticket trouvé.</td>
           </tr>
           <tr v-for="ticket in tickets" :key="ticket.id">
             <td>
               <div class="data-table__cell">
                 <span class="data-table__cell--main">{{ ticket.title }}</span>
-                <span class="data-table__cell--sub">{{ ticket.description || '—' }}</span>
               </div>
             </td>
-            <td>
+            <td v-if="!auth.isClientRole">
               <div class="data-table__cell">
                 <span class="data-table__cell--main">
                   {{ clientName(ticket.clientId) }}
@@ -114,9 +113,24 @@
             </td>
             <td class="data-table__actions">
               <div class="btn-group">
-                <button class="btn btn-ghost text-sm" @click="goToEdit(ticket.id)">Modifier</button>
-                <button class="btn btn-ghost text-sm" @click="goToDetails(ticket.id)">Détails</button>
-                <button class="btn btn-ghost text-sm text-danger" @click="askDelete(ticket)">
+                <button
+                  v-if="!auth.isClientRole"
+                  class="btn btn-ghost text-sm"
+                  @click="goToEdit(ticket.id)"
+                >
+                  Modifier
+                </button>
+                <button
+                  class="btn btn-ghost text-sm"
+                  @click="goToDetails(ticket.id)"
+                >
+                  Détails
+                </button>
+                <button
+                  v-if="!auth.isClientRole"
+                  class="btn btn-ghost text-sm text-danger"
+                  @click="askDelete(ticket)"
+                >
                   Supprimer
                 </button>
               </div>
@@ -162,6 +176,7 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { fetchTickets, deleteTicket } from '@/api/tickets'
 import { fetchClients } from '@/api/clients'
+import { useAuthStore } from '@/stores/auth'
 import type { Ticket } from '@/types/tickets'
 import type { Client } from '@/types/clients'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
@@ -172,7 +187,9 @@ const loading = ref(false)
 const confirmVisible = ref(false)
 const targetId = ref<number | null>(null)
 const targetTitle = ref('')
-const clients = ref<Client[]>([])
+const clientOptions = ref<any[]>([])
+const clientsLoading = ref(false)
+const clientsError = ref<string | null>(null)
 
 const filters = reactive({
   query: '',
@@ -203,7 +220,7 @@ const slaFilterValue = computed(() => {
 
 function clientName(id: number | null) {
   if (!id) return '—'
-  const match = clients.value.find((c) => c.id === id)
+  const match = clientOptions.value.find((c) => c.id === id)
   return match?.name || `Client #${id}`
 }
 
@@ -252,9 +269,24 @@ function formatDate(value: string | null) {
   return formatter.format(new Date(value))
 }
 
+const auth = useAuthStore()
+
 async function loadClients() {
-  const { data } = await fetchClients({ page: 0, size: 100 })
-  clients.value = data.content
+  if (auth.isClientRole) {
+    clientOptions.value = []
+    return
+  }
+  clientsLoading.value = true
+  clientsError.value = null
+  try {
+    const { data } = await fetchClients({ page: 0, size: 100 })
+    clientOptions.value = data.content
+  } catch (e:any) {
+    console.error('[TicketsListView] fetchClients failed', e)
+    clientsError.value = 'Erreur chargement clients'
+  } finally {
+    clientsLoading.value = false
+  }
 }
 
 async function loadTickets() {
@@ -312,6 +344,9 @@ async function handleDelete() {
 }
 
 onMounted(async () => {
-  await Promise.all([loadClients(), loadTickets()])
+  await Promise.all([
+    loadClients(),
+    loadTickets(),
+  ])
 })
 </script>

@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.*;
 import java.util.Map;
+import com.teo.servicecare.sites.dto.SiteLightResponse;
 
 @Service
 public class SiteService {
@@ -223,5 +224,10 @@ public class SiteService {
     }
 
     return repo.findAll(spec, pageable);
+  }
+
+  public java.util.List<SiteLightResponse> listForClient(String username, Long clientId) {
+    var sites = repo.findAllByClient_IdOrderByNameAsc(clientId);
+    return sites.stream().map(SiteLightResponse::from).toList();
   }
 }

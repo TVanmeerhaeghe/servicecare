@@ -4,12 +4,14 @@ import com.teo.servicecare.common.dto.PageResponse;
 import com.teo.servicecare.sites.dto.SiteCreateRequest;
 import com.teo.servicecare.sites.dto.SiteResponse;
 import com.teo.servicecare.sites.dto.SiteUpdateRequest;
+import com.teo.servicecare.sites.dto.SiteLightResponse;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
@@ -85,5 +87,15 @@ public class SiteController {
         principal.getUsername(), clientId, environment, type, cms, status, q, createdFrom, createdTo, pageable)
         .map(SiteResponse::from);
     return PageResponse.from(page);
+  }
+
+  @GetMapping("/by-client/{clientId}")
+  @PreAuthorize("isAuthenticated()")
+  public java.util.List<SiteLightResponse> sitesByClient(
+      @PathVariable Long clientId,
+      @AuthenticationPrincipal User principal) {
+    if (principal == null)
+      throw new org.springframework.security.access.AccessDeniedException("unauthorized");
+    return service.listForClient(principal.getUsername(), clientId);
   }
 }

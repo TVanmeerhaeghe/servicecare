@@ -1,5 +1,5 @@
 import api from "./http";
-import type { Site, SitePage, SitePayload } from "@/types/sites";
+import type { Site, SitePage, SitePayload, SiteLight } from "@/types/sites";
 
 export const fetchSites = (params: {
   page: number;
@@ -37,3 +37,7 @@ export const updateSite = (id: string | number, payload: SitePayload) =>
   api.put(`/sites/${id}`, payload);
 
 export const deleteSite = (id: string | number) => api.delete(`/sites/${id}`);
+
+export function fetchSitesByClient(clientId: number) {
+  return api.get<SiteLight[]>(`/sites/by-client/${clientId}`);
+}

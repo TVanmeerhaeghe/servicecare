@@ -6,17 +6,13 @@ export const fetchClients = (params: {
   size: number;
   search?: string;
   status?: string;
-  createdFrom?: string;
-  createdTo?: string;
 }) =>
-  api.get<ClientPage>("/clients/search", {
+  api.get("/clients/search", {
     params: {
       page: params.page,
       size: params.size,
       q: params.search || undefined,
       status: params.status || undefined,
-      createdFrom: params.createdFrom || undefined,
-      createdTo: params.createdTo || undefined,
     },
   });
 

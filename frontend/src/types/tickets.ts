@@ -24,6 +24,8 @@ export interface Ticket {
   resolvedAt: string | null;
   slaBreached: boolean;
   pausedSeconds: number;
+  createdAt?: string | null;
+  updatedAt?: string | null;
 }
 
 export interface TicketPage {

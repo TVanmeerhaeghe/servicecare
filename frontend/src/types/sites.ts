@@ -44,6 +44,35 @@ export interface Site {
   updatedBy: number | null;
 }
 
+export type SitePayload = {
+  clientId: number | null;
+  name?: string;
+  url?: string | null;
+  environment?: SiteEnvironment | null;
+  type?: SiteType | null;
+  cms?: SiteCms | null;
+  status?: SiteStatus | null;
+  repoUrl?: string | null;
+  prodUrl?: string | null;
+  stagingUrl?: string | null;
+  hostingProvider?: string | null;
+  hostingPlan?: string | null;
+  serverIp?: string | null;
+  phpVersion?: string | null;
+  nodeVersion?: string | null;
+  mysqlVersion?: string | null;
+  sslStatus?: SiteSslStatus | null;
+  analyticsId?: string | null;
+  gtId?: string | null;
+  sentryDsn?: string | null;
+  maintenanceEnabled?: boolean | null;
+  maintenanceEmail?: string | null;
+  lastMaintenanceAt?: string | null;
+  nextMaintenanceAt?: string | null;
+  lastBackupAt?: string | null;
+  notes?: string | null;
+};
+
 export interface SitePage {
   content: Site[];
   page: number;
@@ -51,31 +80,8 @@ export interface SitePage {
   totalElements: number;
 }
 
-export interface SitePayload {
-  clientId: number | null;
-  name: string | null;
-  url: string | null;
-  environment: SiteEnvironment | null;
-  type: SiteType | null;
-  cms: SiteCms | null;
-  status: SiteStatus | null;
-  repoUrl: string | null;
-  prodUrl: string | null;
-  stagingUrl: string | null;
-  hostingProvider: string | null;
-  hostingPlan: string | null;
-  serverIp: string | null;
-  phpVersion: string | null;
-  nodeVersion: string | null;
-  mysqlVersion: string | null;
-  sslStatus: SiteSslStatus | null;
-  analyticsId: string | null;
-  gtId: string | null;
-  sentryDsn: string | null;
-  maintenanceEnabled: boolean | null;
-  maintenanceEmail: string | null;
-  lastMaintenanceAt: string | null;
-  nextMaintenanceAt: string | null;
-  lastBackupAt: string | null;
-  notes: string | null;
+export interface SiteLight {
+  id: number;
+  name?: string | null;
+  url?: string | null;
 }

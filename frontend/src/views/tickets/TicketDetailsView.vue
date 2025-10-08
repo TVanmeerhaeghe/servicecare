@@ -2,14 +2,20 @@
   <div class="page-stack">
     <header class="page-header">
       <div>
-        <h1 class="text-lg">{{ ticket?.title || 'Ticket' }}</h1>
+        <h1 class="text-lg">
+          Ticket #{{ ticket?.id }} - {{ ticket?.title || 'Ticket' }}
+        </h1>
         <p class="text-sm text-muted">
           {{ ticket?.description || 'Aucun détail fourni.' }}
         </p>
       </div>
       <div class="filters-controls">
         <button class="btn btn-ghost text-sm" @click="goBack">Retour</button>
-        <button class="btn btn-primary text-sm" @click="goEdit">Modifier</button>
+        <button
+          v-if="!isClientRole"
+          class="btn btn-primary text-sm"
+          @click="goEdit"
+        >Modifier</button>
       </div>
     </header>
 
@@ -40,22 +46,22 @@
         </div>
       </article>
 
-      <article v-if="client" class="data-card">
+      <article v-if="!isClientRole && client" class="data-card">
         <div class="p-5">
           <h2 class="section-kicker">Client</h2>
-          <dl class="info-grid">
-            <div><dt>Nom</dt><dd>{{ client.name || '—' }}</dd></div>
-            <div><dt>Email</dt><dd>{{ client.contactEmail || '—' }}</dd></div>
-            <div><dt>Téléphone</dt><dd>{{ client.contactPhone || '—' }}</dd></div>
-            <div><dt>Statut</dt><dd>{{ client.status || '—' }}</dd></div>
-          </dl>
-          <button class="btn btn-primary text-sm mt-4" @click="goToClientDetails">
-            Voir le client
-          </button>
+            <dl class="info-grid">
+              <div><dt>Nom</dt><dd>{{ client.name || '—' }}</dd></div>
+              <div><dt>Email</dt><dd>{{ client.contactEmail || '—' }}</dd></div>
+              <div><dt>Téléphone</dt><dd>{{ client.contactPhone || '—' }}</dd></div>
+              <div><dt>Statut</dt><dd>{{ client.status || '—' }}</dd></div>
+            </dl>
+            <button class="btn btn-primary text-sm mt-4" @click="goToClientDetails">
+              Voir le client
+            </button>
         </div>
       </article>
 
-      <article class="data-card">
+      <article v-if="!isClientRole" class="data-card">
         <div class="p-5">
           <h2 class="section-kicker">Références</h2>
           <dl class="info-grid">
@@ -70,10 +76,32 @@
         <div class="p-5">
           <h2 class="section-kicker">Historique</h2>
           <ul class="timeline">
-            <li v-for="event in thread" :key="`${event.kind}-${event.id}`">
+            <li class="timeline__item timeline__initial">
+              <div class="timeline__title">
+                {{ ticket.title }}
+              </div>
+              <div class="timeline__meta">
+                Créé {{ ticket.createdAt ? formatDate(ticket.createdAt) : '—' }}
+              </div>
+              <div class="timeline__body">
+                <pre v-if="ticket.description" class="preserve">{{ ticket.description }}</pre>
+                <span v-else class="text-muted">Aucune description.</span>
+              </div>
+            </li>
+
+            <li
+              v-for="event in thread"
+              :key="`${event.kind}-${event.id}`"
+              class="timeline__item"
+            >
               <div class="timeline__meta">{{ eventDate(event) }}</div>
-              <div class="timeline__title">{{ eventTitle(event) }}</div>
-              <div class="timeline__body" v-if="eventDetails(event)">{{ eventDetails(event) }}</div>
+              <div class="timeline__title">
+                {{ eventTitle(event) }}
+              </div>
+              <div
+                class="timeline__body"
+                v-if="eventDetails(event)"
+              >{{ eventDetails(event) }}</div>
               <a
                 v-if="event.kind === 'ATTACHMENT' && event.downloadUrl"
                 :href="event.downloadUrl"
@@ -84,7 +112,9 @@
                 Télécharger
               </a>
             </li>
-            <li v-if="!thread.length" class="timeline__empty">Aucun événement pour ce ticket.</li>
+            <li v-if="!thread.length" class="timeline__empty">
+              Aucun événement pour ce ticket.
+            </li>
           </ul>
         </div>
       </article>
@@ -103,15 +133,17 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { fetchTicketDetails } from '@/api/tickets'
+import { useAuthStore } from '@/stores/auth'
+import { fetchTicketDetails, fetchTicketThread } from '@/api/tickets'
 import { fetchClientDetails } from '@/api/clients'
 import TicketCommentsSection from '@/components/tickets/TicketCommentsSection.vue'
-import { fetchTicketThread } from '@/api/tickets'
-import type { Ticket } from '@/types/tickets'
+import type { Ticket, TicketThreadEvent } from '@/types/tickets'
 import type { Client } from '@/types/clients'
-import type { TicketThreadEvent } from '@/types/tickets'
+
+const auth = useAuthStore()
+const isClientRole = computed(() => auth.isClientRole)
 
 const route = useRoute()
 const router = useRouter()
@@ -127,7 +159,7 @@ const formatter = new Intl.DateTimeFormat('fr-FR', {
 async function load() {
   const { data } = await fetchTicketDetails(route.params.id as string)
   ticket.value = data
-  if (data.clientId) {
+  if (!isClientRole.value && data.clientId) {
     const clientRes = await fetchClientDetails(data.clientId)
     client.value = clientRes.data
   }
@@ -138,7 +170,7 @@ async function loadThread() {
   thread.value = threadRes.data
 }
 function reloadThread() {
-  loadThread()
+  loadThread() 
 }
 
 function goBack() {
@@ -146,6 +178,7 @@ function goBack() {
 }
 
 function goEdit() {
+  if (isClientRole.value) return
   router.push({ name: 'ticket-edit', params: { id: route.params.id } })
 }
 
