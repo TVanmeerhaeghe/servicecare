@@ -65,7 +65,8 @@ public class TicketThreadService {
             c.getCreatedAt(),
             c.getAuthorName(),
             c.getBody(),
-            c.isAuthorIsClient()))
+            c.isAuthorIsClient(),
+            c.isInternalOnly()))
         .toList();
 
     Specification<Intervention> intervSpec = (r, q, cb) -> cb.and(

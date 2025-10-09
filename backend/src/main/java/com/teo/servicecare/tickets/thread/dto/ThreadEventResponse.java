@@ -17,6 +17,7 @@ public class ThreadEventResponse {
   private String body;
 
   private Boolean authorIsClient;
+  private Boolean internalOnly;
 
   private Intervention.Type interventionType;
   private Intervention.Status interventionStatus;
@@ -33,7 +34,7 @@ public class ThreadEventResponse {
   private String downloadUrl;
 
   public static ThreadEventResponse fromComment(Long id, LocalDateTime at, String authorName, String body,
-      Boolean authorIsClient) {
+      Boolean authorIsClient, Boolean internalOnly) {
     var e = new ThreadEventResponse();
     e.kind = Kind.COMMENT;
     e.id = id;
@@ -41,6 +42,7 @@ public class ThreadEventResponse {
     e.authorName = authorName;
     e.body = body;
     e.authorIsClient = authorIsClient;
+    e.internalOnly = internalOnly;
     return e;
   }
 
@@ -102,6 +104,10 @@ public class ThreadEventResponse {
 
   public Boolean getAuthorIsClient() {
     return authorIsClient;
+  }
+
+  public Boolean getInternalOnly() {
+    return internalOnly;
   }
 
   public Intervention.Type getInterventionType() {

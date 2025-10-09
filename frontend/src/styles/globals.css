@@ -1136,3 +1136,7 @@ dd {
   white-space: pre-line;
   font-size: 0.9rem;
 }
+
+.comment-form__actions.only-action {
+  justify-content: flex-end;
+}
