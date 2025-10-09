@@ -114,80 +114,8 @@
 
       <article class="data-card">
         <div class="p-5">
-          <h2 class="section-kicker">Historique</h2>
-          <ul class="timeline">
-            <li class="timeline__item timeline__initial">
-              <div class="timeline__title">
-                {{ ticket.title }}
-              </div>
-              <div class="timeline__meta">
-                Créé {{ ticket.createdAt ? formatDate(ticket.createdAt) : '—' }}
-              </div>
-              <div class="timeline__body">
-                <pre v-if="ticket.description" class="preserve">{{ ticket.description }}</pre>
-                <span v-else class="text-muted">Aucune description.</span>
-              </div>
-            </li>
-
-            <li
-              v-for="event in thread"
-              :key="`${event.kind}-${event.id}`"
-              class="timeline__item"
-              :class="commentItemClasses(event)"
-            >
-              <template v-if="event.kind !== 'COMMENT'">
-                <div class="timeline__head-row">
-                  <span class="t-meta">{{ eventDate(event) }}</span>
-                  <span class="t-sep">•</span>
-                  <span class="t-author">{{ eventAuthor(event) }}</span>
-                  <span class="t-type-badge">{{ eventTypeLabel(event) }}</span>
-                </div>
-
-                <div v-if="event.kind === 'ATTACHMENT'" class="timeline__body attachment-block">
-                  <strong>{{ (event as any).originalName }}</strong>
-                  <span class="t-file-size">({{ ((event as any).size || 0) }} o)</span><br />
-                  <a
-                    v-if="(event as any).downloadUrl"
-                    :href="(event as any).downloadUrl"
-                    class="timeline__link"
-                    target="_blank"
-                    rel="noopener"
-                  >Télécharger</a>
-                </div>
-
-                <div v-else-if="event.kind === 'INTERVENTION'" class="timeline__body">
-                  {{ (event as any).title || 'Intervention' }}
-                  <div class="t-sub">
-                    {{ [(event as any).interventionType, (event as any).interventionStatus].filter(Boolean).join(' • ') }}
-                  </div>
-                </div>
-              </template>
-
-              <template v-else>
-                <div
-                  class="thread-comment"
-                  :class="{
-                    'thread-comment--client': isClientResponse(event),
-                    'thread-comment--staff': !isClientResponse(event),
-                    'thread-comment--internal': !!(event as any).internalOnly
-                  }"
-                >
-                  <div class="thread-comment__meta">
-                    <span class="thread-comment__author">{{ eventAuthor(event) }}</span>
-                    <span class="thread-comment__time">{{ eventDate(event) }}</span>
-                    <span v-if="(event as any).internalOnly" class="thread-comment__tag" title="Interne">INT</span>
-                  </div>
-                  <div class="thread-comment__body">
-                    {{ (event as any).body }}
-                  </div>
-                </div>
-              </template>
-            </li>
-
-            <li v-if="!thread.length" class="timeline__empty">
-              Aucun événement pour ce ticket.
-            </li>
-          </ul>
+          <h2 class="section-kicker">Discussion</h2>
+          <TicketThread :ticket="ticket" :thread="thread" />
         </div>
       </article>
 
@@ -208,6 +136,7 @@ import { fetchTicketDetails, fetchTicketThread } from '@/api/tickets'
 import { fetchClientDetails } from '@/api/clients'
 import { fetchSiteDetails } from '@/api/sites'
 import TicketCommentsSection from '@/components/tickets/TicketCommentsSection.vue'
+import TicketThread from '@/components/tickets/TicketThread.vue'
 import type {
   Ticket,
   TicketThreadEvent,
@@ -381,33 +310,6 @@ function formatDuration(seconds: number) {
   const hours = Math.floor(seconds / 3600)
   const mins = Math.floor((seconds % 3600) / 60)
   return `${hours}h${mins.toString().padStart(2,'0')}`
-}
-
-function isComment(e: TicketThreadEvent): e is CommentEvent { return e.kind === 'COMMENT' }
-function isAttachment(e: TicketThreadEvent): e is AttachmentEvent { return e.kind === 'ATTACHMENT' }
-function isIntervention(e: TicketThreadEvent): e is InterventionEvent { return e.kind === 'INTERVENTION' }
-
-function eventDate(e: TicketThreadEvent) { return e.at ? formatter.format(new Date(e.at)) : '—' }
-function eventAuthor(e: TicketThreadEvent) {
-  if ((e as any).authorName) return (e as any).authorName
-  if ((e as any).authorUserId) return `Utilisateur #${(e as any).authorUserId}`
-  return 'Système'
-}
-
-function eventTypeLabel(e: TicketThreadEvent) {
-  if (isIntervention(e)) return 'Intervention'
-  if (isAttachment(e)) return 'Pièce jointe'
-  return e.kind
-}
-
-function isClientResponse(e: TicketThreadEvent): boolean {
-  if (!isComment(e)) return false
-  return !!(e as CommentEvent).authorIsClient
-}
-
-function commentItemClasses(e: TicketThreadEvent) {
-  if (e.kind !== 'COMMENT') return null
-  return 'timeline__item--comment'
 }
 
 onMounted(load)
