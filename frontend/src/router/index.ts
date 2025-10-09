@@ -14,6 +14,10 @@ import TicketsListView from "@/views/tickets/TicketsListView.vue";
 import TicketDetailsView from "@/views/tickets/TicketDetailsView.vue";
 import TicketFormView from "@/views/tickets/TicketFormView.vue";
 import { useAuthStore } from "@/stores/auth";
+import ContractsListView from "@/views/contracts/ContractsListView.vue";
+import ContractFormView from "@/views/contracts/ContractFormView.vue";
+import ContractDetailsView from "@/views/contracts/ContractDetailsView.vue";
+import ContractsLayout from "@/views/contracts/ContractsLayout.vue";
 
 const routes: RouteRecordRaw[] = [
   {
@@ -128,6 +132,33 @@ const routes: RouteRecordRaw[] = [
         component: TicketFormView,
         props: true,
         meta: { title: "Modifier ticket" },
+      },
+    ],
+  },
+  {
+    path: "/contracts",
+    component: ContractsLayout,
+    meta: { requiresAuth: true, title: "Contrats" },
+    children: [
+      {
+        path: "",
+        name: "contracts-list",
+        component: ContractsListView,
+      },
+      {
+        path: "create",
+        name: "contract-create",
+        component: ContractFormView,
+      },
+      {
+        path: ":id",
+        name: "contract-details",
+        component: ContractDetailsView,
+      },
+      {
+        path: ":id/edit",
+        name: "contract-edit",
+        component: ContractFormView,
       },
     ],
   },

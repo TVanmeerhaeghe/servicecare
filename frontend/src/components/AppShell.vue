@@ -69,6 +69,7 @@ const rawNav = [
   { to: '/tickets', label: 'Tickets', icon: 'TK', admin: false },
   { to: '/clients', label: 'Clients', icon: 'CL', admin: true },
   { to: '/sites', label: 'Sites', icon: 'ST', admin: false },
+  { to: '/contracts', label: 'Contrats', icon: 'CT', admin: false },
 ]
 
 const nav = computed(() =>
