@@ -24,7 +24,7 @@
               <input v-model="form.title" class="input" required />
             </label>
 
-            <label class="field" v-if="!isClientRole">
+            <label class="field" v-if="!isClientRole && !isEdit">
               <span>Client *</span>
               <select v-model="selectedClientId" class="input" required>
                 <option value="" disabled>Sélectionner un client</option>
@@ -34,7 +34,6 @@
               </select>
             </label>
 
-            <!-- Sélecteur de site (basé sur le nouvel endpoint) -->
             <label class="field" v-if="(isClientRole || form.clientId)">
               <span>Site *</span>
               <select v-model="selectedSiteId" class="input" required :disabled="sitesLoading || !siteOptions.length">
@@ -94,7 +93,12 @@
               class="input"
               rows="6"
               placeholder="Décrivez votre problème ou demande…"
+              :readonly="isEdit"
+              :disabled="isEdit"
             ></textarea>
+            <small v-if="isEdit" class="text-xs text-muted">
+              La description initiale n’est pas modifiable. Ajoutez un commentaire pour compléter.
+            </small>
           </label>
         </div>
 
@@ -232,26 +236,14 @@ function applyTicketToForm(ticket: Ticket) {
 }
 
 function buildUpdatePayload(): Partial<TicketPayload> {
-  if (isClientRole.value) {
-    return {
-      title: form.title,
-      description: form.description || null,
-      priority: form.priority,
-      siteId: form.siteId ?? null,
-      clientId: form.clientId,
-      contractId: form.contractId,
-    }
-  }
   return {
     title: form.title,
-    description: form.description || null,
     priority: form.priority,
     assigneeUserId: form.assigneeUserId ?? null,
     status: form.status,
     waitingReason: form.waitingReason || null,
     siteId: form.siteId ?? null,
     contractId: form.contractId ?? null,
-    clientId: form.clientId,
   }
 }
 
