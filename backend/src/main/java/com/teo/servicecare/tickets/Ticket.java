@@ -1,7 +1,9 @@
 package com.teo.servicecare.tickets;
 
+import com.teo.servicecare.contracts.Contract;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 
 @Entity
 @Table(name = "tickets")
@@ -55,6 +57,29 @@ public class Ticket {
   @Column(nullable = false)
   private int pausedSeconds = 0;
   private LocalDateTime pauseStartedAt;
+
+  private String slaTimezone;
+
+  @Enumerated(EnumType.STRING)
+  private Contract.SupportDays slaSupportDays;
+
+  private LocalTime slaSupportHoursStart;
+  private LocalTime slaSupportHoursEnd;
+
+  @Enumerated(EnumType.STRING)
+  private Contract.MeasureWindow slaMeasureWindow;
+
+  private Boolean slaPauseOnWaiting;
+
+  private Integer slaRespCritHours;
+  private Integer slaRespHighHours;
+  private Integer slaRespMediumHours;
+  private Integer slaRespLowHours;
+
+  private Integer slaResoCritHours;
+  private Integer slaResoHighHours;
+  private Integer slaResoMediumHours;
+  private Integer slaResoLowHours;
 
   private Long createdBy;
   private Long updatedBy;
@@ -214,6 +239,14 @@ public class Ticket {
     this.updatedBy = updatedBy;
   }
 
+  public LocalDateTime getDeletedAt() {
+    return deletedAt;
+  }
+
+  public void setDeletedAt(LocalDateTime deletedAt) {
+    this.deletedAt = deletedAt;
+  }
+
   public LocalDateTime getCreatedAt() {
     return createdAt;
   }
@@ -222,11 +255,116 @@ public class Ticket {
     return updatedAt;
   }
 
-  public LocalDateTime getDeletedAt() {
-    return deletedAt;
+  public String getSlaTimezone() {
+    return slaTimezone;
   }
 
-  public void setDeletedAt(LocalDateTime deletedAt) {
-    this.deletedAt = deletedAt;
+  public void setSlaTimezone(String slaTimezone) {
+    this.slaTimezone = slaTimezone;
   }
+
+  public Contract.SupportDays getSlaSupportDays() {
+    return slaSupportDays;
+  }
+
+  public void setSlaSupportDays(Contract.SupportDays slaSupportDays) {
+    this.slaSupportDays = slaSupportDays;
+  }
+
+  public LocalTime getSlaSupportHoursStart() {
+    return slaSupportHoursStart;
+  }
+
+  public void setSlaSupportHoursStart(LocalTime slaSupportHoursStart) {
+    this.slaSupportHoursStart = slaSupportHoursStart;
+  }
+
+  public LocalTime getSlaSupportHoursEnd() {
+    return slaSupportHoursEnd;
+  }
+
+  public void setSlaSupportHoursEnd(LocalTime slaSupportHoursEnd) {
+    this.slaSupportHoursEnd = slaSupportHoursEnd;
+  }
+
+  public Contract.MeasureWindow getSlaMeasureWindow() {
+    return slaMeasureWindow;
+  }
+
+  public void setSlaMeasureWindow(Contract.MeasureWindow slaMeasureWindow) {
+    this.slaMeasureWindow = slaMeasureWindow;
+  }
+
+  public Boolean getSlaPauseOnWaiting() {
+    return slaPauseOnWaiting;
+  }
+
+  public void setSlaPauseOnWaiting(Boolean slaPauseOnWaiting) {
+    this.slaPauseOnWaiting = slaPauseOnWaiting;
+  }
+
+  public Integer getSlaRespCritHours() {
+    return slaRespCritHours;
+  }
+
+  public void setSlaRespCritHours(Integer v) {
+    this.slaRespCritHours = v;
+  }
+
+  public Integer getSlaRespHighHours() {
+    return slaRespHighHours;
+  }
+
+  public void setSlaRespHighHours(Integer v) {
+    this.slaRespHighHours = v;
+  }
+
+  public Integer getSlaRespMediumHours() {
+    return slaRespMediumHours;
+  }
+
+  public void setSlaRespMediumHours(Integer v) {
+    this.slaRespMediumHours = v;
+  }
+
+  public Integer getSlaRespLowHours() {
+    return slaRespLowHours;
+  }
+
+  public void setSlaRespLowHours(Integer v) {
+    this.slaRespLowHours = v;
+  }
+
+  public Integer getSlaResoCritHours() {
+    return slaResoCritHours;
+  }
+
+  public void setSlaResoCritHours(Integer v) {
+    this.slaResoCritHours = v;
+  }
+
+  public Integer getSlaResoHighHours() {
+    return slaResoHighHours;
+  }
+
+  public void setSlaResoHighHours(Integer v) {
+    this.slaResoHighHours = v;
+  }
+
+  public Integer getSlaResoMediumHours() {
+    return slaResoMediumHours;
+  }
+
+  public void setSlaResoMediumHours(Integer v) {
+    this.slaResoMediumHours = v;
+  }
+
+  public Integer getSlaResoLowHours() {
+    return slaResoLowHours;
+  }
+
+  public void setSlaResoLowHours(Integer v) {
+    this.slaResoLowHours = v;
+  }
+  // --- fin getters/setters SLA snapshot ---
 }

@@ -95,4 +95,9 @@ public class TicketController {
         pageable).map(TicketResponse::from);
     return PageResponse.from(page);
   }
+
+  @GetMapping("/{id}/sla")
+  public com.teo.servicecare.tickets.dto.TicketSlaResponse getSla(@PathVariable Long id) {
+    return service.getSla(id);
+  }
 }
