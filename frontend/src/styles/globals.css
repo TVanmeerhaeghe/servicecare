@@ -1140,3 +1140,39 @@ dd {
 .comment-form__actions.only-action {
   justify-content: flex-end;
 }
+
+.user-form-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 1fr;
+}
+.col-4,
+.col-6 {
+  grid-column: span 1;
+}
+
+@media (min-width: 768px) {
+  .user-form-grid {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+  }
+  .col-4 {
+    grid-column: span 4;
+  }
+  .col-6 {
+    grid-column: span 6;
+  }
+}
+
+.reset-block {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 50%;
+}
+
+.reset-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+}

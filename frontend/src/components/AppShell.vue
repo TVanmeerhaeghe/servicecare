@@ -70,6 +70,7 @@ const rawNav = [
   { to: '/clients', label: 'Clients', icon: 'CL', admin: true },
   { to: '/sites', label: 'Sites', icon: 'ST', admin: false },
   { to: '/contracts', label: 'Contrats', icon: 'CT', admin: false },
+  { to: '/users', label: 'Utilisateurs', icon: 'US', admin: true },
 ]
 
 const nav = computed(() =>

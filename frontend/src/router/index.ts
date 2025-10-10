@@ -18,6 +18,10 @@ import ContractsListView from "@/views/contracts/ContractsListView.vue";
 import ContractFormView from "@/views/contracts/ContractFormView.vue";
 import ContractDetailsView from "@/views/contracts/ContractDetailsView.vue";
 import ContractsLayout from "@/views/contracts/ContractsLayout.vue";
+import UsersLayout from "@/views/users/UsersLayout.vue";
+import UsersListView from "@/views/users/UsersListView.vue";
+import UserFormView from "@/views/users/UserFormView.vue";
+import UserDetailsView from "@/views/users/UserDetailsView.vue";
 
 const routes: RouteRecordRaw[] = [
   {
@@ -159,6 +163,33 @@ const routes: RouteRecordRaw[] = [
         path: ":id/edit",
         name: "contract-edit",
         component: ContractFormView,
+      },
+    ],
+  },
+  {
+    path: "/users",
+    component: UsersLayout,
+    meta: { requiresAuth: true, adminOnly: true, title: "Utilisateurs" },
+    children: [
+      {
+        path: "",
+        name: "users-list",
+        component: UsersListView,
+      },
+      {
+        path: "create",
+        name: "user-create",
+        component: UserFormView,
+      },
+      {
+        path: ":id",
+        name: "user-details",
+        component: UserDetailsView,
+      },
+      {
+        path: ":id/edit",
+        name: "user-edit",
+        component: UserFormView,
       },
     ],
   },
