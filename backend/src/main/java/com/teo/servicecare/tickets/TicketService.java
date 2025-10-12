@@ -432,6 +432,83 @@ public class TicketService {
     return d == Contract.SupportDays.MON_FRI;
   }
 
+  private ZoneId slaZone(Ticket t, Contract c) {
+    String tz = (t.getSlaTimezone() != null) ? t.getSlaTimezone()
+        : (c != null && c.getTimezone() != null ? c.getTimezone() : APP_ZONE.getId());
+    try {
+      return ZoneId.of(tz);
+    } catch (Exception ex) {
+      return APP_ZONE;
+    }
+  }
+
+  private LocalDateTime toSlaZone(LocalDateTime dt, ZoneId zone) {
+    if (dt == null)
+      return null;
+    return dt.atZone(APP_ZONE).withZoneSameInstant(zone).toLocalDateTime();
+  }
+
+  private long businessElapsedSecondsSla(LocalDateTime startApp, LocalDateTime endApp, Ticket t, Contract c) {
+    ZoneId zone = slaZone(t, c);
+    LocalDateTime start = toSlaZone(startApp, zone);
+    LocalDateTime end = toSlaZone(endApp, zone);
+    return businessElapsedSeconds(start, end, slaStart(t, c), slaEnd(t, c), slaMonFriOnly(t, c));
+  }
+
+  private long businessElapsedSeconds(LocalDateTime start, LocalDateTime end,
+      LocalTime supportStart, LocalTime supportEnd,
+      boolean monFriOnly) {
+    if (!end.isAfter(start))
+      return 0L;
+    LocalDate d = start.toLocalDate();
+    LocalDate last = end.toLocalDate();
+    long total = 0L;
+    while (!d.isAfter(last)) {
+      if (!monFriOnly || isMonToFri(d)) {
+        LocalDateTime dayStart = LocalDateTime.of(d, supportStart);
+        LocalDateTime dayEnd = LocalDateTime.of(d, supportEnd);
+        LocalDateTime overlapStart = max(start, dayStart);
+        LocalDateTime overlapEnd = min(end, dayEnd);
+        if (overlapEnd.isAfter(overlapStart)) {
+          total += Duration.between(overlapStart, overlapEnd).getSeconds();
+        }
+      }
+      d = d.plusDays(1);
+    }
+    return Math.max(total, 0);
+  }
+
+  private LocalDateTime addWorkingSeconds(LocalDateTime start, long seconds,
+      LocalTime dayStart, LocalTime dayEnd,
+      boolean monFriOnly) {
+    if (seconds <= 0)
+      return start;
+    LocalDateTime cur = start;
+    long remaining = seconds;
+    while (remaining > 0) {
+      if (monFriOnly && !isMonToFri(cur.toLocalDate())) {
+        cur = LocalDateTime.of(cur.toLocalDate().plusDays(1), dayStart);
+        continue;
+      }
+      LocalDateTime windowStart = LocalDateTime.of(cur.toLocalDate(), dayStart);
+      LocalDateTime windowEnd = LocalDateTime.of(cur.toLocalDate(), dayEnd);
+      if (cur.isBefore(windowStart))
+        cur = windowStart;
+      if (!cur.isBefore(windowEnd)) {
+        cur = LocalDateTime.of(cur.toLocalDate().plusDays(1), dayStart);
+        continue;
+      }
+      long avail = Duration.between(cur, windowEnd).getSeconds();
+      long take = Math.min(avail, remaining);
+      cur = cur.plusSeconds(take);
+      remaining -= take;
+      if (remaining > 0) {
+        cur = LocalDateTime.of(cur.toLocalDate().plusDays(1), dayStart);
+      }
+    }
+    return cur;
+  }
+
   private void recomputeDeadlinesRemaining(Ticket t, Contract c) {
     var now = LocalDateTime.now(APP_ZONE);
     var prio = t.getPriority();
@@ -439,18 +516,39 @@ public class TicketService {
     int targetRespH = targetRespondHours(prio, c, t);
     int targetResoH = targetResolveHours(prio, c, t);
 
-    boolean pauseOnWaiting = slaPauseOnWaiting(t, c);
     Contract.MeasureWindow window = slaWindow(t, c);
 
     if (t.getRespondedAt() == null) {
-      long elapsed = effectiveElapsedSeconds(t, now, window, pauseOnWaiting, c);
+      long elapsed = effectiveElapsedSeconds(t, now, window, slaPauseOnWaiting(t, c), c);
       long remaining = Math.max(0, targetRespH * 3600L - elapsed);
-      t.setRespondBy(now.plusSeconds(remaining));
+      if (window == Contract.MeasureWindow.CALENDAR) {
+        t.setRespondBy(now.plusSeconds(remaining));
+      } else {
+        ZoneId zone = slaZone(t, c);
+        LocalDateTime dueSla = addWorkingSeconds(
+            toSlaZone(now, zone),
+            remaining,
+            slaStart(t, c),
+            slaEnd(t, c),
+            slaMonFriOnly(t, c));
+        t.setRespondBy(dueSla.atZone(zone).withZoneSameInstant(APP_ZONE).toLocalDateTime());
+      }
     }
     if (t.getResolvedAt() == null) {
-      long elapsed = effectiveElapsedSeconds(t, now, window, pauseOnWaiting, c);
+      long elapsed = effectiveElapsedSeconds(t, now, window, slaPauseOnWaiting(t, c), c);
       long remaining = Math.max(0, targetResoH * 3600L - elapsed);
-      t.setResolveBy(now.plusSeconds(remaining));
+      if (window == Contract.MeasureWindow.CALENDAR) {
+        t.setResolveBy(now.plusSeconds(remaining));
+      } else {
+        ZoneId zone = slaZone(t, c);
+        LocalDateTime dueSla = addWorkingSeconds(
+            toSlaZone(now, zone),
+            remaining,
+            slaStart(t, c),
+            slaEnd(t, c),
+            slaMonFriOnly(t, c));
+        t.setResolveBy(dueSla.atZone(zone).withZoneSameInstant(APP_ZONE).toLocalDateTime());
+      }
     }
 
     if (t.getResolvedAt() == null && t.getResolveBy() != null && now.isAfter(t.getResolveBy())) {
@@ -465,10 +563,7 @@ public class TicketService {
     if (window == Contract.MeasureWindow.CALENDAR) {
       base = Duration.between(start, now).getSeconds();
     } else {
-      var supportStart = slaStart(t, c);
-      var supportEnd = slaEnd(t, c);
-      var monFriOnly = slaMonFriOnly(t, c);
-      base = businessElapsedSeconds(start, now, supportStart, supportEnd, monFriOnly);
+      base = businessElapsedSecondsSla(start, now, t, c);
     }
 
     if (!pauseOnWaiting)
@@ -479,33 +574,10 @@ public class TicketService {
       if (window == Contract.MeasureWindow.CALENDAR) {
         paused += Duration.between(t.getPauseStartedAt(), now).getSeconds();
       } else {
-        paused += businessElapsedSeconds(t.getPauseStartedAt(), now, slaStart(t, c), slaEnd(t, c), slaMonFriOnly(t, c));
+        paused += businessElapsedSecondsSla(t.getPauseStartedAt(), now, t, c);
       }
     }
     return Math.max(base - paused, 0);
-  }
-
-  private long businessElapsedSeconds(LocalDateTime start, LocalDateTime now,
-      LocalTime supportStart, LocalTime supportEnd,
-      boolean monFriOnly) {
-    if (!now.isAfter(start))
-      return 0L;
-    LocalDate d = start.toLocalDate();
-    LocalDate last = now.toLocalDate();
-    long total = 0L;
-    while (!d.isAfter(last)) {
-      if (!monFriOnly || isMonToFri(d)) {
-        LocalDateTime dayStart = LocalDateTime.of(d, supportStart);
-        LocalDateTime dayEnd = LocalDateTime.of(d, supportEnd);
-        LocalDateTime overlapStart = max(start, dayStart);
-        LocalDateTime overlapEnd = min(now, dayEnd);
-        if (overlapEnd.isAfter(overlapStart)) {
-          total += Duration.between(overlapStart, overlapEnd).getSeconds();
-        }
-      }
-      d = d.plusDays(1);
-    }
-    return Math.max(total, 0);
   }
 
   private boolean isMonToFri(LocalDate d) {
