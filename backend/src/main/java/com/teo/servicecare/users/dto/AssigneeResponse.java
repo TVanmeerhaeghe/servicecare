@@ -8,6 +8,7 @@ public class AssigneeResponse {
   private String firstName;
   private String lastName;
   private String phone;
+  private User.Role role;
 
   public static AssigneeResponse from(User u) {
     var r = new AssigneeResponse();
@@ -16,6 +17,7 @@ public class AssigneeResponse {
     r.firstName = u.getFirstName();
     r.lastName = u.getLastName();
     r.phone = u.getPhone();
+    r.role = u.getRole();
     return r;
   }
 
@@ -37,5 +39,9 @@ public class AssigneeResponse {
 
   public String getPhone() {
     return phone;
+  }
+
+  public User.Role getRole() {
+    return role;
   }
 }

@@ -46,3 +46,12 @@ export interface UserUpdatePayload {
 export interface ResetPasswordPayload {
   newPassword: string;
 }
+
+export interface Assignee {
+  id: number;
+  email: string;
+  firstName?: string | null;
+  lastName?: string | null;
+  role: UserRole;
+  displayName?: string | null;
+}

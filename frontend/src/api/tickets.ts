@@ -63,3 +63,8 @@ export const transitionTicket = (id: number | string, action: string) =>
 
 export const fetchTicketThread = (ticketId: number | string) =>
   api.get<TicketThreadEvent[]>(`/tickets/${ticketId}/thread`);
+
+export const assignTicket = (
+  id: number | string,
+  assigneeUserId: number | string
+) => api.post(`/tickets/${id}/assign`, null, { params: { assigneeUserId } });

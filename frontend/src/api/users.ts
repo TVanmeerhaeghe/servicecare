@@ -1,4 +1,5 @@
 import http from "./http";
+import api from "./http";
 import type { PageResponse } from "@/types/users";
 import type {
   User,
@@ -8,6 +9,7 @@ import type {
   UserStatus,
   ResetPasswordPayload,
 } from "@/types/users";
+import type { Assignee } from "@/types/users";
 
 export function fetchUsers(params?: {
   page?: number;
@@ -51,3 +53,21 @@ export function resetUserPassword(
 ) {
   return http.post<void>(`/users/${id}/reset-password`, payload);
 }
+
+export const fetchAssignees = (params?: {
+  q?: string;
+  page?: number;
+  size?: number;
+}) =>
+  api.get<{
+    content: Assignee[];
+    totalElements: number;
+    totalPages: number;
+    number: number;
+  }>("/users/assignees", {
+    params: {
+      q: params?.q || undefined,
+      page: params?.page ?? 0,
+      size: params?.size ?? 20,
+    },
+  });

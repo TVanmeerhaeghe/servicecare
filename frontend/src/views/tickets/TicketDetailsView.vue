@@ -8,7 +8,23 @@
         <p class="text-sm text-muted">
           {{ ticket?.description || 'Aucun détail fourni.' }}
         </p>
+
+        <div
+          v-if="isAdmin"
+          style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-top:10px;"
+        >
+          <select v-model="selectedAssigneeId" class="select select-sm" style="min-width:320px;">
+            <option :value="null">– Sélectionner un assigné –</option>
+            <option v-for="u in assignees" :key="u.id" :value="u.id">
+              {{ displayAssignee(u) }}
+            </option>
+          </select>
+          <button class="btn btn-primary" :disabled="!selectedAssigneeId || assigning" @click="doAssign">
+            {{ assigning ? 'Assignation…' : 'Assigner' }}
+          </button>
+        </div>
       </div>
+
       <div class="filters-controls">
         <button class="btn btn-ghost text-sm" @click="goBack">Retour</button>
         <button
@@ -115,7 +131,18 @@
 
         <article class="data-card">
           <div class="p-5">
-            <h2 class="section-kicker">Discussion</h2>
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px;">
+              <h2 class="section-kicker" style="margin:0;">Discussion</h2>
+              <button
+                v-if="!isClientRole"
+                class="btn btn-danger btn-sm"
+                :disabled="resolving || isClosed"
+                @click="doResolve"
+              >
+                {{ resolving ? 'Résolution…' : 'Résoudre' }}
+              </button>
+            </div>
+
             <TicketThread :ticket="ticket" :thread="thread" />
           </div>
         </article>
@@ -136,9 +163,10 @@
 import { onMounted, ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import { fetchTicketDetails, fetchTicketThread } from '@/api/tickets'
+import { fetchTicketDetails, fetchTicketThread, assignTicket, transitionTicket } from '@/api/tickets'
 import { fetchClientDetails } from '@/api/clients'
 import { fetchSiteDetails } from '@/api/sites'
+import { fetchAssignees } from '@/api/users'
 import TicketCommentsSection from '@/components/tickets/TicketCommentsSection.vue'
 import TicketThread from '@/components/tickets/TicketThread.vue'
 import SlaLogsPanel from '@/components/tickets/SlaLogsPanel.vue'
@@ -151,17 +179,26 @@ import type {
 } from '@/types/tickets'
 import type { Client } from '@/types/clients'
 import type { Site } from '@/types/sites'
+import type { Assignee } from '@/types/users'
 
 const auth = useAuthStore()
 const isClientRole = computed(() => auth.isClientRole)
+const isAdmin = computed(() => auth.user?.role === 'ADMIN')
+const isClosed = computed(() => ticket.value?.status === 'CLOSED' || ticket.value?.status === 'CANCELED')
 
 const route = useRoute()
 const router = useRouter()
+const ticketId = computed(() => Number(route.params.id))
 const ticket = ref<Ticket | null>(null)
 const client = ref<Client | null>(null)
 const site = ref<Site | null>(null)
 const thread = ref<TicketThreadEvent[]>([])
 const showDetails = ref(false)
+
+const assignees = ref<Assignee[]>([])
+const selectedAssigneeId = ref<number | null>(null)
+const assigning = ref(false)
+const resolving = ref(false)
 
 const clientNameFallback = computed(() => (ticket.value?.clientId ? `Client #${ticket.value.clientId}` : '—'))
 const siteDisplay = computed(() => site.value?.url || (site.value as any)?.prodUrl || null)
@@ -170,9 +207,17 @@ const formatter = new Intl.DateTimeFormat('fr-FR', { dateStyle: 'short', timeSty
 
 function toggleDetails() { showDetails.value = !showDetails.value }
 
+function displayAssignee(u: Assignee) {
+  const name = u.displayName || [u.firstName, u.lastName].filter(Boolean).join(' ').trim()
+  return `${name || u.email} · ${u.role}`
+}
+
 async function load() {
   const { data } = await fetchTicketDetails(route.params.id as string)
   ticket.value = data
+
+  selectedAssigneeId.value = (data.assigneeUserId ?? null) as number | null
+
   if (!isClientRole.value && data.clientId) {
     const clientRes = await fetchClientDetails(data.clientId)
     client.value = clientRes.data
@@ -184,6 +229,10 @@ async function load() {
     } catch {}
   }
   await loadThread()
+}
+
+async function reloadTicket() {
+  await load()
 }
 
 async function loadThread() {
@@ -317,14 +366,34 @@ function formatDuration(seconds: number) {
   return `${hours}h${mins.toString().padStart(2,'0')}`
 }
 
-onMounted(load)
-</script>
-
-<style scoped>
-/* Nouveau layout 2 colonnes */
-.details-layout {
-  display: grid;
-  grid-template-columns: 1fr 320px;
-  gap: 16px;
+async function loadAssignees() {
+  const { data } = await fetchAssignees({ page: 0, size: 20 })
+  assignees.value = Array.isArray((data as any).content) ? (data as any).content : (data as any)
 }
-</style>
+
+async function doAssign() {
+  if (!selectedAssigneeId.value) return
+  assigning.value = true
+  try {
+    await assignTicket(ticketId.value, Number(selectedAssigneeId.value))
+    await reloadTicket()
+  } finally {
+    assigning.value = false
+  }
+}
+
+async function doResolve() {
+  resolving.value = true
+  try {
+    await transitionTicket(ticketId.value, 'CLOSE')
+    await reloadTicket()
+  } finally {
+    resolving.value = false
+  }
+}
+
+onMounted(async () => {
+  await load()
+  await loadAssignees()
+})
+</script>
