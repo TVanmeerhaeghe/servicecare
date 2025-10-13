@@ -21,110 +21,114 @@
       </div>
     </header>
 
-    <section v-if="ticket" class="detail-grid">
-      <article class="data-card ticket-summary-card">
-        <div class="ticket-summary-grid">
-          <div class="ts-item">
-            <span class="ts-label">Statut</span>
-            <span class="badge" :class="statusBadge(ticket.status)">{{ statusLabel(ticket.status) }}</span>
+    <div v-if="ticket" class="details-layout">
+      <section class="detail-grid">
+        <article class="data-card ticket-summary-card">
+          <div class="ticket-summary-grid">
+            <div class="ts-item">
+              <span class="ts-label">Statut</span>
+              <span class="badge" :class="statusBadge(ticket.status)">{{ statusLabel(ticket.status) }}</span>
+            </div>
+            <div class="ts-item">
+              <span class="ts-label">Priorité</span>
+              <span class="badge" :class="priorityBadge(ticket.priority)">{{ priorityLabel(ticket.priority) }}</span>
+            </div>
+            <div class="ts-item">
+              <span class="ts-label">Répondre avant</span>
+              <span class="ts-value">{{ formatDate(ticket.respondBy) }}</span>
+            </div>
+            <div class="ts-item">
+              <span class="ts-label">Résoudre avant</span>
+              <span class="ts-value">{{ formatDate(ticket.resolveBy) }}</span>
+            </div>
+            <div class="ts-item" v-if="!isClientRole">
+              <span class="ts-label">Client</span>
+              <span class="ts-value">{{ client?.name || clientNameFallback }}</span>
+            </div>
+            <div class="ts-item">
+              <span class="ts-label">Site</span>
+              <span class="ts-value">{{ siteDisplay || '—' }}</span>
+            </div>
           </div>
-          <div class="ts-item">
-            <span class="ts-label">Priorité</span>
-            <span class="badge" :class="priorityBadge(ticket.priority)">{{ priorityLabel(ticket.priority) }}</span>
-          </div>
-          <div class="ts-item">
-            <span class="ts-label">Répondre avant</span>
-            <span class="ts-value">{{ formatDate(ticket.respondBy) }}</span>
-          </div>
-          <div class="ts-item">
-            <span class="ts-label">Résoudre avant</span>
-            <span class="ts-value">{{ formatDate(ticket.resolveBy) }}</span>
-          </div>
-          <div class="ts-item" v-if="!isClientRole">
-            <span class="ts-label">Client</span>
-            <span class="ts-value">{{ client?.name || clientNameFallback }}</span>
-          </div>
-          <div class="ts-item">
-            <span class="ts-label">Site</span>
-            <span class="ts-value">{{ siteDisplay || '—' }}</span>
-          </div>
-        </div>
-        <div class="ticket-summary-actions">
-          <button class="btn btn-ghost btn-sm" @click="toggleDetails">
-            {{ showDetails ? 'Moins de détails' : 'Plus de détails' }}
-          </button>
-        </div>
-      </article>
-
-      <template v-if="showDetails">
-        <article class="data-card">
-          <div class="p-5">
-            <h2 class="section-kicker">Résumé détaillé</h2>
-            <dl class="info-grid">
-              <div><dt>Statut</dt><dd><span class="badge" :class="statusBadge(ticket.status)">{{ statusLabel(ticket.status) }}</span></dd></div>
-              <div><dt>Priorité</dt><dd><span class="badge" :class="priorityBadge(ticket.priority)">{{ priorityLabel(ticket.priority) }}</span></dd></div>
-              <div><dt>Assigné à</dt><dd>{{ ticket.assigneeUserId ? `Utilisateur #${ticket.assigneeUserId}` : '—' }}</dd></div>
-              <div><dt>Raison attente</dt><dd>{{ ticket.waitingReason || '—' }}</dd></div>
-              <div><dt>Temps en pause</dt><dd>{{ formatDuration(ticket.pausedSeconds) }}</dd></div>
-              <div><dt>SLA dépassé</dt><dd>{{ ticket.slaBreached ? 'Oui' : 'Non' }}</dd></div>
-            </dl>
-          </div>
-        </article>
-
-        <article class="data-card">
-          <div class="p-5">
-            <h2 class="section-kicker">Échéances</h2>
-            <dl class="info-grid">
-              <div><dt>Répondre avant</dt><dd>{{ formatDate(ticket.respondBy) }}</dd></div>
-              <div><dt>Résoudre avant</dt><dd>{{ formatDate(ticket.resolveBy) }}</dd></div>
-              <div><dt>Répondu le</dt><dd>{{ formatDate(ticket.respondedAt) }}</dd></div>
-              <div><dt>Résolu le</dt><dd>{{ formatDate(ticket.resolvedAt) }}</dd></div>
-              <div><dt>Créé le</dt><dd>{{ formatDate(ticket.createdAt || null) }}</dd></div>
-              <div><dt>Màj le</dt><dd>{{ formatDate(ticket.updatedAt || null) }}</dd></div>
-            </dl>
-          </div>
-        </article>
-
-        <article v-if="!isClientRole && client" class="data-card">
-          <div class="p-5">
-            <h2 class="section-kicker">Client</h2>
-            <dl class="info-grid">
-              <div><dt>Nom</dt><dd>{{ client.name || '—' }}</dd></div>
-              <div><dt>Email</dt><dd>{{ client.contactEmail || '—' }}</dd></div>
-              <div><dt>Téléphone</dt><dd>{{ client.contactPhone || '—' }}</dd></div>
-              <div><dt>Statut</dt><dd>{{ client.status || '—' }}</dd></div>
-            </dl>
-            <button class="btn btn-primary text-sm mt-4" @click="goToClientDetails">
-              Voir le client
+          <div class="ticket-summary-actions">
+            <button class="btn btn-ghost btn-sm" @click="toggleDetails">
+              {{ showDetails ? 'Moins de détails' : 'Plus de détails' }}
             </button>
           </div>
         </article>
 
-        <article v-if="!isClientRole" class="data-card">
+        <template v-if="showDetails">
+          <article class="data-card">
+            <div class="p-5">
+              <h2 class="section-kicker">Résumé détaillé</h2>
+              <dl class="info-grid">
+                <div><dt>Statut</dt><dd><span class="badge" :class="statusBadge(ticket.status)">{{ statusLabel(ticket.status) }}</span></dd></div>
+                <div><dt>Priorité</dt><dd><span class="badge" :class="priorityBadge(ticket.priority)">{{ priorityLabel(ticket.priority) }}</span></dd></div>
+                <div><dt>Assigné à</dt><dd>{{ ticket.assigneeUserId ? `Utilisateur #${ticket.assigneeUserId}` : '—' }}</dd></div>
+                <div><dt>Raison attente</dt><dd>{{ ticket.waitingReason || '—' }}</dd></div>
+                <div><dt>Temps en pause</dt><dd>{{ formatDuration(ticket.pausedSeconds) }}</dd></div>
+                <div><dt>SLA dépassé</dt><dd>{{ ticket.slaBreached ? 'Oui' : 'Non' }}</dd></div>
+              </dl>
+            </div>
+          </article>
+
+          <article class="data-card">
+            <div class="p-5">
+              <h2 class="section-kicker">Échéances</h2>
+              <dl class="info-grid">
+                <div><dt>Répondre avant</dt><dd>{{ formatDate(ticket.respondBy) }}</dd></div>
+                <div><dt>Résoudre avant</dt><dd>{{ formatDate(ticket.resolveBy) }}</dd></div>
+                <div><dt>Répondu le</dt><dd>{{ formatDate(ticket.respondedAt) }}</dd></div>
+                <div><dt>Résolu le</dt><dd>{{ formatDate(ticket.resolvedAt) }}</dd></div>
+                <div><dt>Créé le</dt><dd>{{ formatDate(ticket.createdAt || null) }}</dd></div>
+                <div><dt>Màj le</dt><dd>{{ formatDate(ticket.updatedAt || null) }}</dd></div>
+              </dl>
+            </div>
+          </article>
+
+          <article v-if="!isClientRole && client" class="data-card">
+            <div class="p-5">
+              <h2 class="section-kicker">Client</h2>
+              <dl class="info-grid">
+                <div><dt>Nom</dt><dd>{{ client.name || '—' }}</dd></div>
+                <div><dt>Email</dt><dd>{{ client.contactEmail || '—' }}</dd></div>
+                <div><dt>Téléphone</dt><dd>{{ client.contactPhone || '—' }}</dd></div>
+                <div><dt>Statut</dt><dd>{{ client.status || '—' }}</dd></div>
+              </dl>
+              <button class="btn btn-primary text-sm mt-4" @click="goToClientDetails">
+                Voir le client
+              </button>
+            </div>
+          </article>
+
+          <article v-if="!isClientRole" class="data-card">
+            <div class="p-5">
+              <h2 class="section-kicker">Références</h2>
+              <dl class="info-grid">
+                <div><dt>Client</dt><dd>{{ client?.name || clientNameFallback }}</dd></div>
+                <div><dt>Site</dt><dd>{{ siteDisplay || '—' }}</dd></div>
+                <div><dt>Contrat</dt><dd>{{ ticket.contractId || '—' }}</dd></div>
+              </dl>
+            </div>
+          </article>
+        </template>
+
+        <article class="data-card">
           <div class="p-5">
-            <h2 class="section-kicker">Références</h2>
-            <dl class="info-grid">
-              <div><dt>Client</dt><dd>{{ client?.name || clientNameFallback }}</dd></div>
-              <div><dt>Site</dt><dd>{{ siteDisplay || '—' }}</dd></div>
-              <div><dt>Contrat</dt><dd>{{ ticket.contractId || '—' }}</dd></div>
-            </dl>
+            <h2 class="section-kicker">Discussion</h2>
+            <TicketThread :ticket="ticket" :thread="thread" />
           </div>
         </article>
-      </template>
 
-      <article class="data-card">
-        <div class="p-5">
-          <h2 class="section-kicker">Discussion</h2>
-          <TicketThread :ticket="ticket" :thread="thread" />
-        </div>
-      </article>
+        <article class="data-card" v-if="ticket">
+          <div class="p-5">
+            <TicketCommentsSection :ticket-id="ticket.id" @comment-posted="reloadThread" />
+          </div>
+        </article>
+      </section>
 
-      <article class="data-card" v-if="ticket">
-        <div class="p-5">
-          <TicketCommentsSection :ticket-id="ticket.id" @comment-posted="reloadThread" />
-        </div>
-      </article>
-    </section>
+      <SlaLogsPanel v-if="!isClientRole" :ticket-id="Number(route.params.id)" />
+    </div>
   </div>
 </template>
 
@@ -137,6 +141,7 @@ import { fetchClientDetails } from '@/api/clients'
 import { fetchSiteDetails } from '@/api/sites'
 import TicketCommentsSection from '@/components/tickets/TicketCommentsSection.vue'
 import TicketThread from '@/components/tickets/TicketThread.vue'
+import SlaLogsPanel from '@/components/tickets/SlaLogsPanel.vue'
 import type {
   Ticket,
   TicketThreadEvent,
@@ -314,3 +319,12 @@ function formatDuration(seconds: number) {
 
 onMounted(load)
 </script>
+
+<style scoped>
+/* Nouveau layout 2 colonnes */
+.details-layout {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 16px;
+}
+</style>

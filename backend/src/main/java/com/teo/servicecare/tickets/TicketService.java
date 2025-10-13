@@ -14,6 +14,8 @@ import org.springframework.stereotype.Service;
 import java.time.*;
 import java.util.Map;
 import java.util.Set;
+import com.teo.servicecare.tickets.sla.TicketSlaEvent;
+import com.teo.servicecare.tickets.sla.TicketSlaEventRepository;
 
 @Service
 public class TicketService {
@@ -21,11 +23,14 @@ public class TicketService {
   private final TicketRepository repo;
   private final UserRepository userRepo;
   private final ContractRepository contractRepo;
+  private final TicketSlaEventRepository slaEventRepo; // NEW
 
-  public TicketService(TicketRepository repo, UserRepository userRepo, ContractRepository contractRepo) {
+  public TicketService(TicketRepository repo, UserRepository userRepo, ContractRepository contractRepo,
+      TicketSlaEventRepository slaEventRepo) { // NEW
     this.repo = repo;
     this.userRepo = userRepo;
     this.contractRepo = contractRepo;
+    this.slaEventRepo = slaEventRepo; // NEW
   }
 
   private static final ZoneId APP_ZONE = ZoneId.of("Europe/Paris");
@@ -137,6 +142,26 @@ public class TicketService {
     return repo.save(t);
   }
 
+  // Variante complète (avec actorName)
+  private void recordSlaEvent(Ticket t, TicketSlaEvent.Type type, LocalDateTime at,
+                              Long actorUserId, String actorName, String note, String payloadJson) {
+    TicketSlaEvent e = new TicketSlaEvent();
+    e.setTicket(t);
+    e.setType(type);
+    e.setHappenedAt(at);
+    e.setActorUserId(actorUserId);
+    e.setActorUserName(actorName);
+    e.setNote(note);
+    e.setPayloadJson(payloadJson);
+    slaEventRepo.save(e);
+  }
+
+  // Ancienne signature: compat (sans actorName)
+  private void recordSlaEvent(Ticket t, TicketSlaEvent.Type type, LocalDateTime at,
+                              Long actorUserId, String note, String payloadJson) {
+    recordSlaEvent(t, type, at, actorUserId, null, note, payloadJson);
+  }
+
   public Ticket update(String email, Long id, TicketUpdateRequest in) {
     User current = userRepo.findByEmail(email).orElseThrow();
     var t = repo.findById(id).orElseThrow();
@@ -167,6 +192,7 @@ public class TicketService {
     if (in.getStatus() != null) {
       var newStatus = in.getStatus();
       var now = LocalDateTime.now(APP_ZONE);
+
       if ((newStatus == Ticket.TicketStatus.ASSIGNED || newStatus == Ticket.TicketStatus.IN_PROGRESS)
           && t.getRespondedAt() == null) {
         t.setRespondedAt(now);
@@ -174,11 +200,44 @@ public class TicketService {
       if (newStatus == Ticket.TicketStatus.CLOSED && t.getResolvedAt() == null) {
         t.setResolvedAt(now);
       }
+
+      if (newStatus == Ticket.TicketStatus.WAITING) {
+        if (t.getPauseStartedAt() == null) {
+          t.setPauseStartedAt(now);
+          recordSlaEvent(t, TicketSlaEvent.Type.WAIT_START, now, current.getId(), current.getEmail(), t.getWaitingReason(), null);
+        }
+      } else {
+        if (beforeStatus == Ticket.TicketStatus.WAITING && t.getPauseStartedAt() != null) {
+          long add = Duration.between(t.getPauseStartedAt(), now).getSeconds();
+          t.setPausedSeconds(t.getPausedSeconds() + (int) Math.max(add, 0));
+          t.setPauseStartedAt(null);
+          recordSlaEvent(t, TicketSlaEvent.Type.WAIT_END, now, current.getId(), current.getEmail(), "RESUME", null);
+        }
+      }
+
       t.setStatus(newStatus);
+      recordSlaEvent(
+          t,
+          TicketSlaEvent.Type.STATUS_CHANGE,
+          now,
+          current.getId(),
+          current.getEmail(),
+          "STATUS_CHANGE",
+          "{\"from\":\"" + beforeStatus + "\",\"to\":\"" + newStatus + "\"}"
+      );
     }
 
     boolean priorityChanged = (in.getPriority() != null && in.getPriority() != beforePriority);
     boolean statusChanged = (in.getStatus() != null && in.getStatus() != beforeStatus);
+    if (priorityChanged) {
+      recordSlaEvent(t, TicketSlaEvent.Type.PRIORITY_CHANGE,
+          LocalDateTime.now(APP_ZONE),
+          current.getId(),
+          current.getEmail(),
+          "Priority changed",
+          "{\"from\":\"" + beforePriority + "\",\"to\":\"" + in.getPriority() + "\"}");
+    }
+
     if (priorityChanged || statusChanged) {
       Contract c = (t.getContractId() != null) ? contractRepo.findById(t.getContractId()).orElse(null) : null;
       recomputeDeadlinesRemaining(t, c);
@@ -200,18 +259,18 @@ public class TicketService {
     switch (action) {
       case "ASSIGN" -> {
         t.setStatus(Ticket.TicketStatus.ASSIGNED);
-        if (t.getRespondedAt() == null)
-          t.setRespondedAt(now);
+        if (t.getRespondedAt() == null) t.setRespondedAt(now);
+        recordSlaEvent(t, TicketSlaEvent.Type.STATUS_CHANGE, now, null, "ASSIGN", "{\"to\":\"ASSIGNED\"}");
       }
       case "START" -> {
         t.setStatus(Ticket.TicketStatus.IN_PROGRESS);
-        if (t.getRespondedAt() == null)
-          t.setRespondedAt(now);
+        if (t.getRespondedAt() == null) t.setRespondedAt(now);
+        recordSlaEvent(t, TicketSlaEvent.Type.STATUS_CHANGE, now, null, "START", "{\"to\":\"IN_PROGRESS\"}");
       }
       case "WAIT" -> {
         t.setStatus(Ticket.TicketStatus.WAITING);
-        if (t.getPauseStartedAt() == null)
-          t.setPauseStartedAt(now);
+        if (t.getPauseStartedAt() == null) t.setPauseStartedAt(now);
+        recordSlaEvent(t, TicketSlaEvent.Type.WAIT_START, now, null, t.getWaitingReason(), null);
       }
       case "RESUME" -> {
         if (t.getPauseStartedAt() != null) {
@@ -220,13 +279,17 @@ public class TicketService {
           t.setPauseStartedAt(null);
         }
         t.setStatus(Ticket.TicketStatus.IN_PROGRESS);
+        recordSlaEvent(t, TicketSlaEvent.Type.WAIT_END, now, null, "RESUME", null);
       }
       case "CLOSE" -> {
         t.setStatus(Ticket.TicketStatus.CLOSED);
-        if (t.getResolvedAt() == null)
-          t.setResolvedAt(now);
+        if (t.getResolvedAt() == null) t.setResolvedAt(now);
+        recordSlaEvent(t, TicketSlaEvent.Type.STATUS_CHANGE, now, null, "CLOSE", "{\"to\":\"CLOSED\"}");
       }
-      case "CANCEL" -> t.setStatus(Ticket.TicketStatus.CANCELED);
+      case "CANCEL" -> {
+        t.setStatus(Ticket.TicketStatus.CANCELED);
+        recordSlaEvent(t, TicketSlaEvent.Type.STATUS_CHANGE, now, null, "CANCEL", "{\"to\":\"CANCELED\"}");
+      }
       default -> throw new IllegalArgumentException("unknown_action");
     }
 
