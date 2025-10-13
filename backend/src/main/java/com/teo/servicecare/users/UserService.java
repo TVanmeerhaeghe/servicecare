@@ -130,7 +130,7 @@ public class UserService {
   }
 
   public Page<AssigneeResponse> assignees(String q, Pageable pageable) {
-    Specification<User> roleSpec = (r, qb, cb) -> r.get("role").in(User.Role.AGENT, User.Role.TECHNICIAN);
+    Specification<User> roleSpec = (r, qb, cb) -> r.get("role").in(User.Role.ADMIN, User.Role.AGENT, User.Role.TECHNICIAN);
     Specification<User> activeSpec = (r, qb, cb) -> cb.equal(r.get("status"), User.Status.ACTIVE);
 
     Specification<User> spec = roleSpec.and(activeSpec);

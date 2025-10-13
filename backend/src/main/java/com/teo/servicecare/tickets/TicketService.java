@@ -49,6 +49,9 @@ public class TicketService {
 
     if (current.getRole() == User.Role.ADMIN || current.getRole() == User.Role.AGENT) {
       return repo.findAll(notDeleted, pageable);
+    } else if (current.getRole() == User.Role.TECHNICIAN) {
+      Specification<Ticket> mine = notDeleted.and((r, q, cb) -> cb.equal(r.get("assigneeUserId"), current.getId()));
+      return repo.findAll(mine, pageable);
     }
 
     Long userClientId = (current.getClient() != null) ? current.getClient().getId() : -1L;
@@ -328,11 +331,12 @@ public class TicketService {
     if (isClient) {
       Long scopedClientId = (current.getClient() != null) ? current.getClient().getId() : -1L;
       spec = spec.and((r, qb, cb) -> cb.equal(r.get("clientId"), scopedClientId));
-    } else {
-      if (clientId != null)
-        spec = spec.and((r, qb, cb) -> cb.equal(r.get("clientId"), clientId));
+    } else if (current.getRole() == User.Role.TECHNICIAN) {
+      spec = spec.and((r, qb, cb) -> cb.equal(r.get("assigneeUserId"), current.getId()));
     }
 
+    if (clientId != null)
+      spec = spec.and((r, qb, cb) -> cb.equal(r.get("clientId"), clientId));
     if (siteId != null)
       spec = spec.and((r, qb, cb) -> cb.equal(r.get("siteId"), siteId));
     if (contractId != null)
@@ -654,5 +658,30 @@ public class TicketService {
 
   private LocalDateTime min(LocalDateTime a, LocalDateTime b) {
     return a.isBefore(b) ? a : b;
+  }
+
+  public Ticket assign(String email, Long ticketId, Long assigneeUserId) {
+    var admin = userRepo.findByEmail(email).orElseThrow();
+
+    var assignee = userRepo.findById(assigneeUserId)
+        .filter(u -> u.getStatus() == User.Status.ACTIVE)
+        .filter(u -> u.getRole() == User.Role.ADMIN || u.getRole() == User.Role.AGENT || u.getRole() == User.Role.TECHNICIAN)
+        .orElseThrow(() -> new IllegalArgumentException("assignee_invalid"));
+
+    var t = repo.findById(ticketId).orElseThrow();
+    if (t.getDeletedAt() != null) throw new IllegalArgumentException("ticket_deleted");
+
+    t.setAssigneeUserId(assignee.getId());
+
+    var now = LocalDateTime.now(APP_ZONE);
+    if (t.getStatus() == Ticket.TicketStatus.OPEN) {
+      t.setStatus(Ticket.TicketStatus.ASSIGNED);
+      if (t.getRespondedAt() == null) t.setRespondedAt(now);
+      recordSlaEvent(t, TicketSlaEvent.Type.STATUS_CHANGE, now,
+          admin.getId(), admin.getFirstName() + " " + admin.getLastName(),
+          "ASSIGN", "{\"to\":\"ASSIGNED\",\"assigneeId\":" + assignee.getId() + "}");
+    }
+
+    return repo.save(t);
   }
 }

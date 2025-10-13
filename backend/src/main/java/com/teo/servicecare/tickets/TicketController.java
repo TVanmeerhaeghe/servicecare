@@ -100,4 +100,14 @@ public class TicketController {
   public com.teo.servicecare.tickets.dto.TicketSlaResponse getSla(@PathVariable Long id) {
     return service.getSla(id);
   }
+
+  @PostMapping("/{id}/assign")
+  @PreAuthorize("hasRole('ADMIN')")
+  public com.teo.servicecare.tickets.dto.TicketResponse assign(
+      @PathVariable Long id,
+      @RequestParam Long assigneeUserId,
+      @AuthenticationPrincipal org.springframework.security.core.userdetails.User principal) {
+    return com.teo.servicecare.tickets.dto.TicketResponse.from(
+        service.assign(principal.getUsername(), id, assigneeUserId));
+  }
 }

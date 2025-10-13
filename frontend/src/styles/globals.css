@@ -732,6 +732,7 @@ dd {
   border-radius: var(--radius-full);
   padding: 6px 14px;
   background: transparent;
+  width: fit-content;
 }
 
 .badge--status-active {
@@ -764,6 +765,7 @@ dd {
   border-radius: var(--radius-full);
   padding: 6px 14px;
   background: transparent;
+  width: fit-content;
 }
 
 .badge--ticket-status-open {
@@ -1308,7 +1310,6 @@ dd {
   color: var(--color-text);
 }
 
-/* Timeline */
 .sla-timeline {
   list-style: none;
   padding: 0;
@@ -1340,7 +1341,6 @@ dd {
   font-size: 14px;
 }
 
-/* Dot colors by type */
 .sla-dot.wait_start {
   background: color-mix(
     in srgb,
@@ -1402,7 +1402,6 @@ dd {
   letter-spacing: 0.02em;
 }
 
-/* Badge colors by type */
 .sla-badge.wait_start {
   color: var(--color-warning);
   border-color: color-mix(
