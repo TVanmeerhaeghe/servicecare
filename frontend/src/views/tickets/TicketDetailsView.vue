@@ -94,7 +94,7 @@
                 <div><dt>Résoudre avant</dt><dd>{{ formatDate(ticket.resolveBy) }}</dd></div>
                 <div><dt>Répondu le</dt><dd>{{ formatDate(ticket.respondedAt) }}</dd></div>
                 <div><dt>Résolu le</dt><dd>{{ formatDate(ticket.resolvedAt) }}</dd></div>
-                <div><dt>Créé le</dt><dd>{{ formatDate(ticket.createdAt) }}</dd></div>
+                <div><dt>Créé le</dt><dd>{{ formatDate(ticket.createdAt || null) }}</dd></div>
                 <div><dt>Màj le</dt><dd>{{ formatDate(ticket.updatedAt || null) }}</dd></div>
               </dl>
             </div>
@@ -134,10 +134,10 @@
               <button
                 v-if="!isClientRole"
                 class="btn btn-danger btn-sm"
-                :disabled="resolving || isClosed"
+                :disabled="resolving || isClosed || (!isAdmin && !canCloseNormally)"
                 @click="doResolve"
               >
-                {{ resolving ? 'Résolution…' : 'Marquer comme résolue' }}
+                {{ resolving ? 'Résolution…' : 'Marqué comme résolue' }}
               </button>
             </div>
 
@@ -385,11 +385,46 @@ async function doAssign() {
   }
 }
 
+function canTransition(status: Ticket['status'], action: string): boolean {
+  const act = action.toUpperCase()
+  const ALLOWED: Record<Ticket['status'], string[]> = {
+    OPEN: ['ASSIGN','START','CANCEL'],
+    ASSIGNED: ['START','WAIT','CANCEL'],
+    IN_PROGRESS: ['WAIT','CLOSE','CANCEL'],
+    WAITING: ['RESUME','CANCEL'],
+    CLOSED: [],
+    CANCELED: [],
+  }
+  return ALLOWED[status]?.includes(act) ?? false
+}
+
+const canCloseNormally = computed(() =>
+  ticket.value ? canTransition(ticket.value.status, 'CLOSE') : false
+)
+
 async function doResolve() {
+  if (!ticket.value) return
+  const allow = canCloseNormally.value
+
+  // Désactive pour non-admin si non autorisé
+  if (!allow && !isAdmin.value) {
+    alert('Transition non autorisée')
+    return
+  }
+
   resolving.value = true
   try {
-    await transitionTicket(ticketId.value, 'CLOSE')
+    if (allow) {
+      await transitionTicket(ticketId.value, 'CLOSE')
+    } else {
+      // ADMIN: forcer directement, pas d’appel qui échoue avant
+      const ok = window.confirm('Transition non autorisée.\n\nForcer la fermeture ?')
+      if (!ok) return
+      await transitionTicket(ticketId.value, 'CLOSE', { force: true })
+    }
     await reloadTicket()
+  } catch (e: any) {
+    alert(e?.response?.data?.message || e?.message || 'Erreur')
   } finally {
     resolving.value = false
   }
@@ -400,3 +435,5 @@ onMounted(async () => {
   await loadAssignees()
 })
 </script>
+
+<!-- Dans le template, désactiver pour non-admin si non autorisé -->

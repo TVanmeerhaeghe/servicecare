@@ -6,6 +6,8 @@ import com.teo.servicecare.tickets.dto.TicketCreateRequest;
 import com.teo.servicecare.tickets.dto.TicketUpdateRequest;
 import com.teo.servicecare.users.User;
 import com.teo.servicecare.users.UserRepository;
+import java.time.Duration;
+import java.time.LocalDateTime;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -23,14 +25,14 @@ public class TicketService {
   private final TicketRepository repo;
   private final UserRepository userRepo;
   private final ContractRepository contractRepo;
-  private final TicketSlaEventRepository slaEventRepo; // NEW
+  private final TicketSlaEventRepository slaEventRepo;
 
   public TicketService(TicketRepository repo, UserRepository userRepo, ContractRepository contractRepo,
-      TicketSlaEventRepository slaEventRepo) { // NEW
+      TicketSlaEventRepository slaEventRepo) {
     this.repo = repo;
     this.userRepo = userRepo;
     this.contractRepo = contractRepo;
-    this.slaEventRepo = slaEventRepo; // NEW
+    this.slaEventRepo = slaEventRepo;
   }
 
   private static final ZoneId APP_ZONE = ZoneId.of("Europe/Paris");
@@ -145,7 +147,6 @@ public class TicketService {
     return repo.save(t);
   }
 
-  // Variante complète (avec actorName)
   private void recordSlaEvent(Ticket t, TicketSlaEvent.Type type, LocalDateTime at,
                               Long actorUserId, String actorName, String note, String payloadJson) {
     TicketSlaEvent e = new TicketSlaEvent();
@@ -159,7 +160,6 @@ public class TicketService {
     slaEventRepo.save(e);
   }
 
-  // Ancienne signature: compat (sans actorName)
   private void recordSlaEvent(Ticket t, TicketSlaEvent.Type type, LocalDateTime at,
                               Long actorUserId, String note, String payloadJson) {
     recordSlaEvent(t, type, at, actorUserId, null, note, payloadJson);
@@ -249,17 +249,47 @@ public class TicketService {
     return repo.save(t);
   }
 
-  public Ticket transition(Long id, String action) {
+  public Ticket transition(String email, Long id, String action, boolean force) {
     var t = repo.findById(id).orElseThrow();
-    if (t.getDeletedAt() != null)
-      throw new IllegalArgumentException("ticket_deleted");
+    if (t.getDeletedAt() != null) throw new IllegalArgumentException("ticket_deleted");
 
-    var allowed = ALLOWED.getOrDefault(t.getStatus(), Set.of());
-    if (!allowed.contains(action))
+    User current = userRepo.findByEmail(email).orElseThrow();
+    boolean isAdmin = current.getRole() == User.Role.ADMIN;
+
+    if (t.getStatus() == Ticket.TicketStatus.CLOSED || t.getStatus() == Ticket.TicketStatus.CANCELED) {
       throw new IllegalArgumentException("transition_not_allowed");
+    }
+
+    String act = (action == null ? "" : action.trim().toUpperCase(java.util.Locale.ROOT));
+
+    var allowed = ALLOWED.getOrDefault(t.getStatus(), java.util.Set.of());
+    if (!allowed.contains(act) && !(force && isAdmin)) {
+      if (force && !isAdmin) throw new IllegalArgumentException("transition_not_allowed_force_denied");
+      throw new IllegalArgumentException("transition_not_allowed");
+    }
 
     var now = LocalDateTime.now(APP_ZONE);
-    switch (action) {
+    switch (act) {
+      case "CLOSE" -> {
+        if (t.getPauseStartedAt() != null) {
+          long add = Duration.between(t.getPauseStartedAt(), now).getSeconds();
+          t.setPausedSeconds(t.getPausedSeconds() + (int) Math.max(add, 0));
+          t.setPauseStartedAt(null);
+        }
+        if (t.getRespondedAt() == null) t.setRespondedAt(now);
+        t.setStatus(Ticket.TicketStatus.CLOSED);
+        if (t.getResolvedAt() == null) t.setResolvedAt(now);
+
+        String payload = "{\"to\":\"CLOSED\",\"forced\":" + (force && isAdmin) + "}";
+        try {
+          recordSlaEvent(t, com.teo.servicecare.tickets.sla.TicketSlaEvent.Type.STATUS_CHANGE, now,
+              current.getId(), current.getFirstName() + " " + current.getLastName(),
+              "CLOSE", payload);
+        } catch (NoSuchMethodError err) {
+          recordSlaEvent(t, com.teo.servicecare.tickets.sla.TicketSlaEvent.Type.STATUS_CHANGE, now,
+              current.getId(), "CLOSE", payload);
+        }
+      }
       case "ASSIGN" -> {
         t.setStatus(Ticket.TicketStatus.ASSIGNED);
         if (t.getRespondedAt() == null) t.setRespondedAt(now);
@@ -284,21 +314,12 @@ public class TicketService {
         t.setStatus(Ticket.TicketStatus.IN_PROGRESS);
         recordSlaEvent(t, TicketSlaEvent.Type.WAIT_END, now, null, "RESUME", null);
       }
-      case "CLOSE" -> {
-        t.setStatus(Ticket.TicketStatus.CLOSED);
-        if (t.getResolvedAt() == null) t.setResolvedAt(now);
-        recordSlaEvent(t, TicketSlaEvent.Type.STATUS_CHANGE, now, null, "CLOSE", "{\"to\":\"CLOSED\"}");
-      }
       case "CANCEL" -> {
         t.setStatus(Ticket.TicketStatus.CANCELED);
         recordSlaEvent(t, TicketSlaEvent.Type.STATUS_CHANGE, now, null, "CANCEL", "{\"to\":\"CANCELED\"}");
       }
-      default -> throw new IllegalArgumentException("unknown_action");
+      default -> { /* no-op */ }
     }
-
-    Contract c = (t.getContractId() != null) ? contractRepo.findById(t.getContractId()).orElse(null) : null;
-    recomputeDeadlinesRemaining(t, c);
-
     return repo.save(t);
   }
 

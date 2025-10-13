@@ -58,8 +58,14 @@ export const deleteTicket = (id: number | string) =>
 export const restoreTicket = (id: number | string) =>
   api.post(`/tickets/${id}/restore`);
 
-export const transitionTicket = (id: number | string, action: string) =>
-  api.post(`/tickets/${id}/transition`, null, { params: { action } });
+export const transitionTicket = (
+  id: number | string,
+  action: string,
+  extra?: Record<string, any>
+) =>
+  api.post(`/tickets/${id}/transition`, null, {
+    params: { action, ...(extra || {}) },
+  });
 
 export const fetchTicketThread = (ticketId: number | string) =>
   api.get<TicketThreadEvent[]>(`/tickets/${ticketId}/thread`);

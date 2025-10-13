@@ -51,9 +51,15 @@ public class TicketController {
   }
 
   @PostMapping("/{id}/transition")
-  @PreAuthorize("hasAnyRole('ADMIN','AGENT','TECHNICIAN')")
-  public TicketResponse transition(@PathVariable Long id, @RequestParam String action) {
-    return TicketResponse.from(service.transition(id, action));
+  @PreAuthorize("hasAnyRole('ADMIN','AGENT','TECHNICIAN') and (!#force or hasRole('ADMIN'))")
+  public TicketResponse transition(
+      @PathVariable Long id,
+      @RequestParam String action,
+      @RequestParam(defaultValue = "false") boolean force,
+      @AuthenticationPrincipal org.springframework.security.core.userdetails.User principal) {
+
+    var t = service.transition(principal.getUsername(), id, action, force);
+    return TicketResponse.from(t);
   }
 
   @DeleteMapping("/{id}")

@@ -74,11 +74,6 @@
             </label>
 
             <label class="field" v-if="!isClientRole">
-              <span>ID assigné</span>
-              <input v-model.number="form.assigneeUserId" type="number" min="1" class="input" />
-            </label>
-
-            <label class="field" v-if="!isClientRole">
               <span>Raison attente</span>
               <input v-model="form.waitingReason" class="input" />
             </label>
