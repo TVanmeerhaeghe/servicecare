@@ -78,9 +78,7 @@
             <div class="p-5">
               <h2 class="section-kicker">Résumé détaillé</h2>
               <dl class="info-grid">
-                <div><dt>Statut</dt><dd><span class="badge" :class="statusBadge(ticket.status)">{{ statusLabel(ticket.status) }}</span></dd></div>
-                <div><dt>Priorité</dt><dd><span class="badge" :class="priorityBadge(ticket.priority)">{{ priorityLabel(ticket.priority) }}</span></dd></div>
-                <div><dt>Assigné à</dt><dd>{{ ticket.assigneeUserId ? `Utilisateur #${ticket.assigneeUserId}` : '—' }}</dd></div>
+                <div><dt>Assigné à</dt><dd>{{ displayAssignee(assigneeUser) || '—' }}</dd></div>
                 <div><dt>Raison attente</dt><dd>{{ ticket.waitingReason || '—' }}</dd></div>
                 <div><dt>Temps en pause</dt><dd>{{ formatDuration(ticket.pausedSeconds) }}</dd></div>
                 <div><dt>SLA dépassé</dt><dd>{{ ticket.slaBreached ? 'Oui' : 'Non' }}</dd></div>
@@ -96,7 +94,7 @@
                 <div><dt>Résoudre avant</dt><dd>{{ formatDate(ticket.resolveBy) }}</dd></div>
                 <div><dt>Répondu le</dt><dd>{{ formatDate(ticket.respondedAt) }}</dd></div>
                 <div><dt>Résolu le</dt><dd>{{ formatDate(ticket.resolvedAt) }}</dd></div>
-                <div><dt>Créé le</dt><dd>{{ formatDate(ticket.createdAt || null) }}</dd></div>
+                <div><dt>Créé le</dt><dd>{{ formatDate(ticket.createdAt) }}</dd></div>
                 <div><dt>Màj le</dt><dd>{{ formatDate(ticket.updatedAt || null) }}</dd></div>
               </dl>
             </div>
@@ -139,7 +137,7 @@
                 :disabled="resolving || isClosed"
                 @click="doResolve"
               >
-                {{ resolving ? 'Résolution…' : 'Résoudre' }}
+                {{ resolving ? 'Résolution…' : 'Marquer comme résolue' }}
               </button>
             </div>
 
@@ -211,6 +209,11 @@ function displayAssignee(u: Assignee) {
   const name = u.displayName || [u.firstName, u.lastName].filter(Boolean).join(' ').trim()
   return `${name || u.email} · ${u.role}`
 }
+
+const assigneeUser = computed(() => {
+  const id = ticket.value?.assigneeUserId
+  return id ? (assignees.value.find(a => a.id === id) || null) : null
+})
 
 async function load() {
   const { data } = await fetchTicketDetails(route.params.id as string)

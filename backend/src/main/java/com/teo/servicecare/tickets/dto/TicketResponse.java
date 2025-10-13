@@ -20,6 +20,8 @@ public class TicketResponse {
   public LocalDateTime resolvedAt;
   public boolean slaBreached;
   public int pausedSeconds;
+  public LocalDateTime createdAt;
+  public LocalDateTime updatedAt;
 
   public static TicketResponse from(Ticket t) {
     var r = new TicketResponse();
@@ -39,6 +41,8 @@ public class TicketResponse {
     r.resolvedAt = t.getResolvedAt();
     r.slaBreached = t.isSlaBreached();
     r.pausedSeconds = t.getPausedSeconds();
+    r.createdAt = t.getCreatedAt();
+    r.updatedAt = t.getUpdatedAt();
     return r;
   }
 }
