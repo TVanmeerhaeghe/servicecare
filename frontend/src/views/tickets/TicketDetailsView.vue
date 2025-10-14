@@ -205,7 +205,8 @@ const formatter = new Intl.DateTimeFormat('fr-FR', { dateStyle: 'short', timeSty
 
 function toggleDetails() { showDetails.value = !showDetails.value }
 
-function displayAssignee(u: Assignee) {
+function displayAssignee(u?: Assignee | null) {
+  if (!u) return ''
   const name = u.displayName || [u.firstName, u.lastName].filter(Boolean).join(' ').trim()
   return `${name || u.email} · ${u.role}`
 }

@@ -66,7 +66,7 @@ export interface AttachmentEvent {
   at: string | null;
   authorName?: string | null;
   authorUserId?: number | null;
-  originalName: string;
+  originalName?: string | null;
   size?: number | null;
   downloadUrl?: string | null;
   contentType?: string | null;

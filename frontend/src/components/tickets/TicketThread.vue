@@ -26,27 +26,36 @@
       <template v-if="event.kind !== 'COMMENT'">
         <div class="timeline__head-row">
           <span class="t-meta">{{ event.at ? fmt(event.at) : '—' }}</span>
-          <span class="t-sep">•</span>
-          <span class="t-author">{{ author(event) }}</span>
-          <span class="t-type-badge">{{ typeLabel(event) }}</span>
+          <span class="t-sep"> • </span>
+          <span v-if="author(event)" class="t-author">{{ author(event) }}</span>
+          <span class="t-type-badge"> {{ typeLabel(event) }}</span>
         </div>
 
-        <div v-if="event.kind === 'ATTACHMENT'" class="timeline__body attachment-block">
-          <strong>{{ (event as any).originalName }}</strong>
-          <span class="t-file-size">({{ ((event as any).size || 0) }} o)</span><br />
-          <a
-            v-if="(event as any).downloadUrl"
-            :href="(event as any).downloadUrl"
-            class="timeline__link"
-            target="_blank"
-            rel="noopener"
-          >Télécharger</a>
+        <div v-if="isAttachment(event)" class="timeline__body attachment-block">
+          <template v-if="isImageAttachment(event)">
+            <div style="display:inline-block; border:1px solid var(--color-border); border-radius:6px; overflow:hidden; max-width:480px;">
+              <img
+                :src="imageSrc[event.id]"
+                :alt="event.originalName || 'Image'"
+                style="display:block; max-width:100%; height:auto;"
+              />
+            </div>
+            <div class="text-muted text-xs" style="margin-top:4px;">
+              {{ event.originalName }}
+            </div>
+          </template>
+
+          <template v-else>
+            <button class="btn btn-ghost btn-xs" @click="downloadAttachment(event.id, event.originalName || 'fichier')">
+              Télécharger {{ event.originalName }}
+            </button>
+          </template>
         </div>
 
-        <div v-else-if="event.kind === 'INTERVENTION'" class="timeline__body">
-          {{ (event as any).title || 'Intervention' }}
+        <div v-else-if="isIntervention(event)" class="timeline__body">
+          {{ event.title || 'Intervention' }}
           <div class="t-sub">
-            {{ [(event as any).interventionType, (event as any).interventionStatus].filter(Boolean).join(' • ') }}
+            {{ [event.interventionType, event.interventionStatus].filter(Boolean).join(' • ') }}
           </div>
         </div>
       </template>
@@ -60,11 +69,15 @@
             'thread-comment--internal': !!(event as any).internalOnly
           }"
         >
-          <div class="thread-comment__meta">
-            <span class="thread-comment__author">{{ author(event) }}</span>
-            <span class="thread-comment__time">{{ event.at ? fmt(event.at) : '—' }}</span>
+          <div class="thread-comment__meta"
+               style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span v-if="author(event)" class="thread-comment__author">{{ author(event) }}</span>
+              <span class="thread-comment__time">{{ event.at ? fmt(event.at) : '—' }}</span>
+            </div>
             <span v-if="(event as any).internalOnly" class="thread-comment__tag" title="Interne">Interne</span>
           </div>
+
           <div class="thread-comment__body">
             {{ (event as any).body }}
           </div>
@@ -80,12 +93,15 @@
 
 <script setup lang="ts">
 import type { Ticket, TicketThreadEvent, AttachmentEvent, InterventionEvent, CommentEvent } from '@/types/tickets'
+import { fetchAttachmentBlob } from '@/api/tickets'
+import { ref, watch, onBeforeUnmount, toRefs } from 'vue'
 
 interface Props {
   ticket: Ticket
   thread: TicketThreadEvent[]
 }
 const props = defineProps<Props>()
+const { thread } = toRefs(props) 
 
 const formatter = new Intl.DateTimeFormat('fr-FR', { dateStyle: 'short', timeStyle: 'short' })
 const fmt = (v: string) => formatter.format(new Date(v))
@@ -94,11 +110,18 @@ function isComment(e: TicketThreadEvent): e is CommentEvent { return e.kind === 
 function isAttachment(e: TicketThreadEvent): e is AttachmentEvent { return e.kind === 'ATTACHMENT' }
 function isIntervention(e: TicketThreadEvent): e is InterventionEvent { return e.kind === 'INTERVENTION' }
 
+function isImageAttachment(e: TicketThreadEvent) {
+  if (!isAttachment(e)) return false
+  const ct = (e as AttachmentEvent).contentType || ''
+  const name = (e as AttachmentEvent).originalName || ''
+  return ct.startsWith('image/') || /\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(name)
+}
+
 function author(e: TicketThreadEvent) {
   const any = e as any
   if (any.authorName) return any.authorName
   if (any.authorUserId) return `Utilisateur #${any.authorUserId}`
-  return 'Système'
+  return ''
 }
 
 function typeLabel(e: TicketThreadEvent) {
@@ -110,4 +133,47 @@ function typeLabel(e: TicketThreadEvent) {
 function isClient(e: TicketThreadEvent) {
   return isComment(e) && (e.authorIsClient === true)
 }
+
+const imageSrc = ref<Record<number, string>>({})
+
+async function loadImageBlob(id: number) {
+  if (imageSrc.value[id]) return
+  try {
+    const res = await fetchAttachmentBlob(id)
+    const url = URL.createObjectURL(res.data)
+    imageSrc.value[id] = url
+  } catch {
+  }
+}
+
+watch(
+  thread,
+  (list) => {
+    const items = (list || []).filter(isAttachment).filter(isImageAttachment)
+    for (const e of items) {
+      loadImageBlob(e.id)
+    }
+  },
+  { immediate: true, deep: true }
+)
+
+async function downloadAttachment(id: number, name: string) {
+  try {
+    const res = await fetchAttachmentBlob(id)
+    const blobUrl = URL.createObjectURL(res.data)
+    const a = document.createElement('a')
+    a.href = blobUrl
+    a.download = name
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    URL.revokeObjectURL(blobUrl)
+  } catch (e) {
+    alert('Téléchargement impossible')
+  }
+}
+
+onBeforeUnmount(() => {
+  Object.values(imageSrc.value).forEach((u) => u && URL.revokeObjectURL(u))
+})
 </script>

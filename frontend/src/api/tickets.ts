@@ -74,3 +74,22 @@ export const assignTicket = (
   id: number | string,
   assigneeUserId: number | string
 ) => api.post(`/tickets/${id}/assign`, null, { params: { assigneeUserId } });
+
+export const uploadTicketAttachment = (
+  ticketId: number | string,
+  file: File
+) => {
+  const fd = new FormData();
+  fd.append("file", file);
+  return api.post(`/tickets/${ticketId}/attachments`, fd, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+};
+
+export const fetchAttachmentBlob = (attachmentId: number | string) =>
+  api.get(`/tickets/attachments/${attachmentId}/download`, {
+    responseType: "blob",
+  });
+
+export const attachmentDownloadUrl = (attachmentId: number | string) =>
+  `/api/tickets/attachments/${attachmentId}/download`;

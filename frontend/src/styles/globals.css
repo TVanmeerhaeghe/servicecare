@@ -1523,3 +1523,14 @@ dd {
   background: var(--color-surface);
   color: var(--color-text);
 }
+
+.comment-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.comment-form__actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
