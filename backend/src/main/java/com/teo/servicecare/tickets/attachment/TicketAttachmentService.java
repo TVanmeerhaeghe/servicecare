@@ -9,6 +9,8 @@ import com.teo.servicecare.users.UserRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -28,32 +30,34 @@ public class TicketAttachmentService {
   private static final ZoneId APP_ZONE = ZoneId.of("Europe/Paris");
   private static final DateTimeFormatter FMT_YYYY_MM = DateTimeFormatter.ofPattern("yyyy/MM");
 
-  private final TicketAttachmentRepository repo;
+  private final TicketAttachmentRepository repository;
   private final TicketRepository ticketRepo;
-  private final UserRepository userRepo;
+  private final UserRepository userRepository;
   private final UploadsProperties props;
 
   private final Path baseDir;
 
-  public TicketAttachmentService(TicketAttachmentRepository repo,
-      TicketRepository ticketRepo,
-      UserRepository userRepo,
-      UploadsProperties props) throws IOException {
-    this.repo = repo;
+  public TicketAttachmentService(TicketAttachmentRepository repository, UserRepository userRepository,
+      TicketRepository ticketRepo, UploadsProperties props) {
+    this.repository = repository;
+    this.userRepository = userRepository;
     this.ticketRepo = ticketRepo;
-    this.userRepo = userRepo;
     this.props = props;
 
-    String configured = props.getDir();
+    String configured = (this.props != null ? this.props.getDir() : null);
     if (configured == null || configured.isBlank()) {
       configured = System.getProperty("user.dir") + File.separator + "uploads";
     }
     this.baseDir = Paths.get(configured).toAbsolutePath().normalize();
-    Files.createDirectories(this.baseDir);
+    try {
+      Files.createDirectories(this.baseDir);
+    } catch (IOException e) {
+      throw new RuntimeException("Failed to create base directory for uploads", e);
+    }
   }
 
   public AttachmentResponse upload(String email, Long ticketId, MultipartFile file) throws IOException {
-    var user = userRepo.findByEmail(email).orElseThrow();
+    var user = userRepository.findByEmail(email).orElseThrow();
     var t = ticketRepo.findById(ticketId).orElseThrow();
     enforceVisibility(user, t);
 
@@ -113,24 +117,24 @@ public class TicketAttachmentService {
     a.setSize(file.getSize());
     a.setStoragePath(yymm + "/" + stored);
     a.setDeletedAt(null);
-
-    return AttachmentResponse.from(repo.save(a));
+    fillUploader(a, null);
+    return AttachmentResponse.from(repository.save(a));
   }
 
   public Page<AttachmentResponse> list(String email, Long ticketId, Pageable pageable) {
-    var user = userRepo.findByEmail(email).orElseThrow();
+    var user = userRepository.findByEmail(email).orElseThrow();
     var t = ticketRepo.findById(ticketId).orElseThrow();
     enforceVisibility(user, t);
 
     Specification<TicketAttachment> spec = (r, q, cb) -> cb.and(
         cb.equal(r.get("ticketId"), ticketId),
         cb.isNull(r.get("deletedAt")));
-    return repo.findAll(spec, pageable).map(AttachmentResponse::from);
+    return repository.findAll(spec, pageable).map(AttachmentResponse::from);
   }
 
   public File getFile(String email, Long attachmentId) {
-    var user = userRepo.findByEmail(email).orElseThrow();
-    var a = repo.findById(attachmentId).orElseThrow();
+    var user = userRepository.findByEmail(email).orElseThrow();
+    var a = repository.findById(attachmentId).orElseThrow();
     var t = ticketRepo.findById(a.getTicketId()).orElseThrow();
     enforceVisibility(user, t);
 
@@ -142,8 +146,8 @@ public class TicketAttachmentService {
   }
 
   public TicketAttachment getMeta(String email, Long attachmentId) {
-    var user = userRepo.findByEmail(email).orElseThrow();
-    var a = repo.findById(attachmentId).orElseThrow();
+    var user = userRepository.findByEmail(email).orElseThrow();
+    var a = repository.findById(attachmentId).orElseThrow();
     var t = ticketRepo.findById(a.getTicketId()).orElseThrow();
     enforceVisibility(user, t);
     if (a.getDeletedAt() != null)
@@ -152,15 +156,15 @@ public class TicketAttachmentService {
   }
 
   public void delete(String email, Long attachmentId) {
-    var user = userRepo.findByEmail(email).orElseThrow();
-    var a = repo.findById(attachmentId).orElseThrow();
+    var user = userRepository.findByEmail(email).orElseThrow();
+    var a = repository.findById(attachmentId).orElseThrow();
     var t = ticketRepo.findById(a.getTicketId()).orElseThrow();
     enforceVisibility(user, t);
 
     if (a.getDeletedAt() != null)
       return;
     a.setDeletedAt(LocalDateTime.now(APP_ZONE));
-    repo.save(a);
+    repository.save(a);
 
     try {
       Path p = baseDir.resolve(a.getStoragePath()).normalize();
@@ -211,5 +215,13 @@ public class TicketAttachmentService {
     } catch (Exception ignore) {
     }
     return "application/octet-stream";
+  }
+
+  private void fillUploader(TicketAttachment a, Authentication auth) {
+    Authentication effective = auth != null ? auth : SecurityContextHolder.getContext().getAuthentication();
+    if (effective == null)
+      return;
+    String email = effective.getName();
+    userRepository.findByEmail(email).ifPresent(a::setUploadedBy);
   }
 }

@@ -93,3 +93,9 @@ export const fetchAttachmentBlob = (attachmentId: number | string) =>
 
 export const attachmentDownloadUrl = (attachmentId: number | string) =>
   `/api/tickets/attachments/${attachmentId}/download`;
+
+export const listTicketAttachments = (
+  ticketId: number | string,
+  page = 0,
+  size = 200
+) => api.get(`/tickets/${ticketId}/attachments`, { params: { page, size } });

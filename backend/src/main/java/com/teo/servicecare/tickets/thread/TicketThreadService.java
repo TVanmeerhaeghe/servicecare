@@ -19,7 +19,6 @@ import com.teo.servicecare.users.UserRepository;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -93,23 +92,25 @@ public class TicketThreadService {
     var attachmentEvents = attachmentRepo.findAll(attSpec, Sort.by(Sort.Direction.ASC, "id"))
         .stream()
         .map(a -> {
-          String downloadUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
-              .path("/api/tickets/attachments/{id}/download")
-              .buildAndExpand(a.getId())
-              .toUriString();
-          LocalDateTime at = a.getCreatedAt();
-          if (at == null)
-            at = LocalDateTime.now();
+          String name = null;
+          if (a.getUploadedBy() != null) {
+            var u = a.getUploadedBy();
+            var fn = u.getFirstName() != null ? u.getFirstName().trim() : "";
+            var ln = u.getLastName() != null ? u.getLastName().trim() : "";
+            var dn = (fn + " " + ln).trim();
+            name = dn.isBlank() ? u.getEmail() : dn;
+          }
           return ThreadEventResponse.fromAttachment(
-              a.getId(), at,
+              a.getId(),
+              a.getCreatedAt(),
               a.getOriginalName(),
               a.getContentType(),
               a.getSize(),
-              downloadUrl);
+              "/api/tickets/attachments/" + a.getId() + "/download",
+              name);
         })
         .toList();
 
-    // Merge + tri
     var timeline = new ArrayList<ThreadEventResponse>();
     timeline.addAll(commentEvents);
     timeline.addAll(interventionEvents);

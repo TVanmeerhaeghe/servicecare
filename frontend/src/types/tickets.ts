@@ -64,12 +64,17 @@ export interface AttachmentEvent {
   kind: "ATTACHMENT";
   id: number;
   at: string | null;
+  originalName?: string | null;
+  contentType?: string | null;
+  downloadUrl?: string | null;
+  size?: number | null;
   authorName?: string | null;
   authorUserId?: number | null;
-  originalName?: string | null;
-  size?: number | null;
-  downloadUrl?: string | null;
-  contentType?: string | null;
+  authorIsClient?: boolean | null;
+  uploaderUserId?: number | null;
+  uploaderFirstName?: string | null;
+  uploaderLastName?: string | null;
+  uploaderDisplayName?: string | null;
 }
 
 export interface InterventionEvent {

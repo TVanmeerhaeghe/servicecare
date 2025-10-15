@@ -16,7 +16,6 @@
         </div>
       </div>
     </li>
-
     <li
       v-for="event in thread"
       :key="`${event.kind}-${event.id}`"
@@ -27,10 +26,8 @@
         <div class="timeline__head-row">
           <span class="t-meta">{{ event.at ? fmt(event.at) : '—' }}</span>
           <span class="t-sep"> • </span>
-          <span v-if="author(event)" class="t-author">{{ author(event) }}</span>
           <span class="t-type-badge"> {{ typeLabel(event) }}</span>
         </div>
-
         <div v-if="isAttachment(event)" class="timeline__body attachment-block">
           <template v-if="isImageAttachment(event)">
             <div style="display:inline-block; border:1px solid var(--color-border); border-radius:6px; overflow:hidden; max-width:480px;">
@@ -43,15 +40,19 @@
             <div class="text-muted text-xs" style="margin-top:4px;">
               {{ event.originalName }}
             </div>
+            <div class="text-xs" style="margin-top:2px;" v-if="author(event)">
+              Ajouté par {{ author(event) }}
+            </div>
           </template>
-
           <template v-else>
             <button class="btn btn-ghost btn-xs" @click="downloadAttachment(event.id, event.originalName || 'fichier')">
               Télécharger {{ event.originalName }}
             </button>
+            <div class="text-xs" style="margin-top:4px;" v-if="author(event)">
+              Ajouté par {{ author(event) }}
+            </div>
           </template>
         </div>
-
         <div v-else-if="isIntervention(event)" class="timeline__body">
           {{ event.title || 'Intervention' }}
           <div class="t-sub">
@@ -59,7 +60,6 @@
           </div>
         </div>
       </template>
-
       <template v-else>
         <div
           class="thread-comment"
@@ -69,22 +69,19 @@
             'thread-comment--internal': !!(event as any).internalOnly
           }"
         >
-          <div class="thread-comment__meta"
-               style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
+          <div class="thread-comment__meta" style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
             <div style="display:flex; align-items:center; gap:8px;">
               <span v-if="author(event)" class="thread-comment__author">{{ author(event) }}</span>
               <span class="thread-comment__time">{{ event.at ? fmt(event.at) : '—' }}</span>
             </div>
             <span v-if="(event as any).internalOnly" class="thread-comment__tag" title="Interne">Interne</span>
           </div>
-
           <div class="thread-comment__body">
             {{ (event as any).body }}
           </div>
         </div>
       </template>
     </li>
-
     <li v-if="!thread.length" class="timeline__empty">
       Aucun événement pour ce ticket.
     </li>
@@ -93,7 +90,7 @@
 
 <script setup lang="ts">
 import type { Ticket, TicketThreadEvent, AttachmentEvent, InterventionEvent, CommentEvent } from '@/types/tickets'
-import { fetchAttachmentBlob } from '@/api/tickets'
+import { fetchAttachmentBlob, listTicketAttachments } from '@/api/tickets'
 import { ref, watch, onBeforeUnmount, toRefs } from 'vue'
 
 interface Props {
@@ -101,7 +98,7 @@ interface Props {
   thread: TicketThreadEvent[]
 }
 const props = defineProps<Props>()
-const { thread } = toRefs(props) 
+const { thread } = toRefs(props)
 
 const formatter = new Intl.DateTimeFormat('fr-FR', { dateStyle: 'short', timeStyle: 'short' })
 const fmt = (v: string) => formatter.format(new Date(v))
@@ -117,23 +114,6 @@ function isImageAttachment(e: TicketThreadEvent) {
   return ct.startsWith('image/') || /\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(name)
 }
 
-function author(e: TicketThreadEvent) {
-  const any = e as any
-  if (any.authorName) return any.authorName
-  if (any.authorUserId) return `Utilisateur #${any.authorUserId}`
-  return ''
-}
-
-function typeLabel(e: TicketThreadEvent) {
-  if (isIntervention(e)) return 'Intervention'
-  if (isAttachment(e)) return 'Pièce jointe'
-  return e.kind
-}
-
-function isClient(e: TicketThreadEvent) {
-  return isComment(e) && (e.authorIsClient === true)
-}
-
 const imageSrc = ref<Record<number, string>>({})
 
 async function loadImageBlob(id: number) {
@@ -142,8 +122,7 @@ async function loadImageBlob(id: number) {
     const res = await fetchAttachmentBlob(id)
     const url = URL.createObjectURL(res.data)
     imageSrc.value[id] = url
-  } catch {
-  }
+  } catch {}
 }
 
 watch(
@@ -168,9 +147,50 @@ async function downloadAttachment(id: number, name: string) {
     a.click()
     a.remove()
     URL.revokeObjectURL(blobUrl)
-  } catch (e) {
+  } catch {
     alert('Téléchargement impossible')
   }
+}
+
+const authorsByAttachmentId = ref<Record<number, string>>({})
+
+async function loadAttachmentAuthors() {
+  try {
+    const res = await listTicketAttachments(props.ticket.id, 0, 200)
+    const page = res.data as any
+    const map: Record<number, string> = {}
+    for (const it of page.content || []) {
+      if (it && typeof it.id === 'number' && it.uploaderDisplayName) {
+        map[it.id] = it.uploaderDisplayName as string
+      }
+    }
+    authorsByAttachmentId.value = map
+  } catch {}
+}
+
+watch(
+  thread,
+  () => {
+    loadAttachmentAuthors()
+    const items = (thread.value || []).filter(isAttachment).filter(isImageAttachment)
+    for (const e of items) loadImageBlob(e.id)
+  },
+  { immediate: true, deep: true }
+)
+
+function author(e: TicketThreadEvent) {
+  const any = e as any
+  return any.uploaderDisplayName || authorsByAttachmentId.value[any.id] || any.authorName || ''
+}
+
+function typeLabel(e: TicketThreadEvent) {
+  if (isIntervention(e)) return 'Intervention'
+  if (isAttachment(e)) return 'Pièce jointe'
+  return e.kind
+}
+
+function isClient(e: TicketThreadEvent) {
+  return isComment(e) && (e.authorIsClient === true)
 }
 
 onBeforeUnmount(() => {

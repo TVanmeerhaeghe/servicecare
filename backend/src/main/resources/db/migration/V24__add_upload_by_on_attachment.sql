@@ -1,0 +1,1 @@
+ALTER TABLE ticket_attachments ADD COLUMN uploaded_by_user_id BIGINT;

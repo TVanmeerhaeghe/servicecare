@@ -1,5 +1,9 @@
 package com.teo.servicecare.tickets.attachment;
 
+import com.teo.servicecare.users.User;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
@@ -36,6 +40,10 @@ public class TicketAttachment {
   private LocalDateTime updatedAt;
 
   private LocalDateTime deletedAt;
+
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "uploaded_by_user_id")
+  private User uploadedBy;
 
   public Long getId() {
     return id;
@@ -103,5 +111,13 @@ public class TicketAttachment {
 
   public void setDeletedAt(LocalDateTime deletedAt) {
     this.deletedAt = deletedAt;
+  }
+
+  public User getUploadedBy() {
+    return uploadedBy;
+  }
+
+  public void setUploadedBy(User uploadedBy) {
+    this.uploadedBy = uploadedBy;
   }
 }

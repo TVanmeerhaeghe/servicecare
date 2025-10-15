@@ -33,6 +33,8 @@ public class ThreadEventResponse {
   private Long size;
   private String downloadUrl;
 
+  private String uploaderDisplayName;
+
   public static ThreadEventResponse fromComment(Long id, LocalDateTime at, String authorName, String body,
       Boolean authorIsClient, Boolean internalOnly) {
     var e = new ThreadEventResponse();
@@ -68,18 +70,23 @@ public class ThreadEventResponse {
   }
 
   public static ThreadEventResponse fromAttachment(
-      Long id, LocalDateTime at,
-      String originalName, String contentType, Long size,
-      String downloadUrl) {
-    var e = new ThreadEventResponse();
-    e.kind = Kind.ATTACHMENT;
-    e.id = id;
-    e.at = at;
-    e.originalName = originalName;
-    e.contentType = contentType;
-    e.size = size;
-    e.downloadUrl = downloadUrl;
-    return e;
+      Long id,
+      java.time.LocalDateTime at,
+      String originalName,
+      String contentType,
+      Long size,
+      String downloadUrl,
+      String uploaderDisplayName) {
+    var r = new ThreadEventResponse();
+    r.kind = Kind.ATTACHMENT;
+    r.id = id;
+    r.at = at;
+    r.originalName = originalName;
+    r.contentType = contentType;
+    r.size = size;
+    r.downloadUrl = downloadUrl;
+    r.uploaderDisplayName = uploaderDisplayName;
+    return r;
   }
 
   public Kind getKind() {
@@ -156,5 +163,13 @@ public class ThreadEventResponse {
 
   public String getDownloadUrl() {
     return downloadUrl;
+  }
+
+  public String getUploaderDisplayName() {
+    return uploaderDisplayName;
+  }
+
+  public void setUploaderDisplayName(String uploaderDisplayName) {
+    this.uploaderDisplayName = uploaderDisplayName;
   }
 }
